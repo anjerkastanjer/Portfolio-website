@@ -1,9 +1,9 @@
 import * as THREE from 'three';
 import type { Shape } from './shapes';
 
-const KLEIN = new THREE.Color('#1a22b8');
-const PAPER = new THREE.Color('#eef0ff');
-const SIGNAL = new THREE.Color('#f5e663');
+const BG = new THREE.Color('#09090b');
+const PAPER = new THREE.Color('#f4f1ea');
+const SIGNAL = new THREE.Color('#ff6b2c');
 
 /** Share of the previous frame that is wiped each frame. The rest lingers as a motion trail. */
 const FADE = 0.34;
@@ -118,7 +118,7 @@ export class Swarm {
       powerPreference: 'high-performance',
     });
     this.renderer.autoClear = false;
-    this.renderer.setClearColor(KLEIN, 1);
+    this.renderer.setClearColor(BG, 1);
 
     const n = Math.round(Math.min(18000, Math.max(5500, (this.width * this.height) / 80)));
     this.count = n;
@@ -182,9 +182,9 @@ export class Swarm {
     const quad = new THREE.PlaneGeometry(2, 2);
     const step = new THREE.Color().setRGB(1.5 / 255, 1.5 / 255, 1.5 / 255, THREE.SRGBColorSpace);
     const passes = [
-      new THREE.MeshBasicMaterial({ color: KLEIN, transparent: true, opacity: reducedMotion ? 1 : FADE }),
+      new THREE.MeshBasicMaterial({ color: BG, transparent: true, opacity: reducedMotion ? 1 : FADE }),
       new THREE.MeshBasicMaterial({ color: step, blending: THREE.CustomBlending, blendEquation: THREE.ReverseSubtractEquation, blendSrc: THREE.OneFactor, blendDst: THREE.OneFactor }),
-      new THREE.MeshBasicMaterial({ color: KLEIN, blending: THREE.CustomBlending, blendEquation: THREE.MaxEquation, blendSrc: THREE.OneFactor, blendDst: THREE.OneFactor }),
+      new THREE.MeshBasicMaterial({ color: BG, blending: THREE.CustomBlending, blendEquation: THREE.MaxEquation, blendSrc: THREE.OneFactor, blendDst: THREE.OneFactor }),
     ];
     passes.forEach((material, i) => {
       material.depthTest = false;

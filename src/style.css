@@ -1,9 +1,9 @@
 :root {
-  --klein: #1a22b8;
-  --deep: #10167e;
-  --paper: #eef0ff;
-  --muted: #a9aef2;
-  --signal: #f5e663;
+  --bg: #09090b;
+  --deep: #16161a;
+  --paper: #f4f1ea;
+  --muted: #9c988f;
+  --signal: #ff6b2c;
 
   --display: 'Anybody Variable', system-ui, sans-serif;
   --text: 'Instrument Sans Variable', system-ui, sans-serif;
@@ -20,7 +20,7 @@
 }
 
 html {
-  background: var(--klein);
+  background: var(--bg);
   -webkit-text-size-adjust: 100%;
 }
 
@@ -35,7 +35,7 @@ html.lenis body {
 
 body {
   margin: 0;
-  background: var(--klein);
+  background: var(--bg);
   color: var(--paper);
   font-family: var(--text);
   font-size: 1.125rem;
@@ -275,7 +275,7 @@ main,
 
 .project__body {
   max-width: 34rem;
-  color: rgb(238 240 255 / 0.88);
+  color: rgb(244 241 234 / 0.88);
   line-height: 1.6;
 }
 
@@ -293,9 +293,9 @@ main,
   max-width: 34rem;
   margin-top: 2rem;
   padding: 1rem 1.15rem 1.15rem;
-  border: 1px solid rgb(238 240 255 / 0.25);
+  border: 1px solid rgb(244 241 234 / 0.25);
   border-radius: 14px;
-  background: rgb(16 22 126 / 0.55);
+  background: rgb(22 22 26 / 0.55);
 }
 
 .demo__label {
@@ -309,9 +309,9 @@ main,
   width: 100%;
   margin-top: 0.5rem;
   padding: 0.6rem 0.75rem;
-  border: 1px solid rgb(238 240 255 / 0.3);
+  border: 1px solid rgb(244 241 234 / 0.3);
   border-radius: 8px;
-  background: rgb(16 22 126 / 0.6);
+  background: rgb(22 22 26 / 0.6);
   color: var(--paper);
   font: inherit;
   font-size: 1rem;
@@ -400,7 +400,7 @@ main,
 .about__body p {
   max-width: 34rem;
   margin-top: 1.25rem;
-  color: rgb(238 240 255 / 0.88);
+  color: rgb(244 241 234 / 0.88);
   line-height: 1.6;
 }
 
@@ -422,7 +422,7 @@ main,
   grid-template-columns: 6.5rem 1fr;
   gap: 1rem;
   padding-top: 0.6rem;
-  border-top: 1px solid rgb(238 240 255 / 0.18);
+  border-top: 1px solid rgb(244 241 234 / 0.18);
 }
 
 .about__facts dt {
@@ -515,7 +515,7 @@ main,
   width: 12px;
   height: 12px;
   border-radius: 50%;
-  background: var(--klein);
+  background: var(--bg);
   border: 2px solid var(--paper);
 }
 
@@ -552,7 +552,7 @@ main,
 .job__body {
   grid-area: body;
   max-width: 38rem;
-  color: rgb(238 240 255 / 0.88);
+  color: rgb(244 241 234 / 0.88);
 }
 
 /* ---------- Skills ---------- */
@@ -632,7 +632,7 @@ main,
   flex-wrap: wrap;
   gap: 1rem 2rem;
   padding: 28px var(--gutter);
-  border-top: 1px solid rgb(238 240 255 / 0.18);
+  border-top: 1px solid rgb(244 241 234 / 0.18);
   color: var(--muted);
   font-size: 0.95rem;
 }
@@ -649,7 +649,7 @@ kbd {
   display: inline-block;
   min-width: 1.6em;
   padding: 0 0.4em;
-  border: 1px solid rgb(238 240 255 / 0.4);
+  border: 1px solid rgb(244 241 234 / 0.4);
   border-radius: 5px;
   font-family: inherit;
   text-align: center;
@@ -664,9 +664,9 @@ kbd {
   z-index: 20;
   width: min(32rem, calc(100vw - 2 * var(--gutter)));
   padding: 14px 20px 16px;
-  border: 1px solid rgb(238 240 255 / 0.25);
+  border: 1px solid rgb(244 241 234 / 0.25);
   border-radius: 16px;
-  background: rgb(16 22 126 / 0.82);
+  background: rgb(22 22 26 / 0.82);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
   opacity: 0;
@@ -699,7 +699,7 @@ kbd {
 }
 
 .say__input::placeholder {
-  color: rgb(238 240 255 / 0.35);
+  color: rgb(244 241 234 / 0.35);
 }
 
 /* ---------- Small screens ---------- */
