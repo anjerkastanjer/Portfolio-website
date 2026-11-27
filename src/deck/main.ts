@@ -643,14 +643,40 @@ function resize() {
 window.addEventListener('resize', resize);
 resize();
 
+// The camera leans with the pointer (or the phone's tilt), so you can look a little around
+// the objects in every scene.
+const lean = { x: 0, y: 0, tx: 0, ty: 0 };
+window.addEventListener('pointermove', (e) => {
+  lean.tx = (e.clientX / window.innerWidth) * 2 - 1;
+  lean.ty = (e.clientY / window.innerHeight) * 2 - 1;
+});
+window.addEventListener('deviceorientation', (e) => {
+  if (e.gamma == null || e.beta == null) return;
+  lean.tx = Math.max(-1, Math.min(1, e.gamma / 25));
+  lean.ty = Math.max(-1, Math.min(1, (e.beta - 45) / 25));
+});
+
 const lookAt = new THREE.Vector3();
+const offset = new THREE.Vector3();
+const right = new THREE.Vector3();
 const clock = new THREE.Clock();
 renderer.setAnimationLoop(() => {
-  const t = clock.getElapsedTime();
+  // getDelta first: getElapsedTime() would reset the clock and leave the delta at zero.
+  const dt = Math.min(clock.getDelta(), 0.1);
+  const t = clock.elapsedTime;
   const sway = reducedMotion ? 0 : 1;
-  const reach = Math.hypot(state.px, state.py, state.pz) * 0.012 * sway;
+  const dist = Math.hypot(state.px - state.tx, state.py - state.ty, state.pz - state.tz);
+  const reach = dist * 0.012 * sway;
+  lean.x += (lean.tx - lean.x) * Math.min(1, dt * 3);
+  lean.y += (lean.ty - lean.y) * Math.min(1, dt * 3);
   camera.position.set(state.px + Math.sin(t * 0.23) * reach, state.py + Math.sin(t * 0.31) * reach * 0.5, state.pz + Math.cos(t * 0.19) * reach);
-  camera.lookAt(lookAt.set(state.tx, state.ty, state.tz));
+  // Swing around the point we look at: sideways with x, up and down with y.
+  lookAt.set(state.tx, state.ty, state.tz);
+  offset.subVectors(camera.position, lookAt);
+  right.crossVectors(offset, camera.up).normalize();
+  camera.position.addScaledVector(right, lean.x * dist * 0.16 * sway);
+  camera.position.y -= lean.y * dist * 0.08 * sway;
+  camera.lookAt(lookAt);
   fog.density = state.fog;
 
   if (sheetSet.visible) updateSheets();
