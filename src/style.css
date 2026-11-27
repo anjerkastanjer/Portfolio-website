@@ -766,6 +766,22 @@ main,
   border-color: var(--signal);
 }
 
+.job {
+  transition: opacity 0.4s;
+}
+
+.is-reading .job:not(.is-current) {
+  opacity: 0.4;
+}
+
+.is-current .job__role {
+  color: var(--signal);
+}
+
+.job__role {
+  transition: color 0.4s;
+}
+
 .job__period {
   grid-area: period;
   color: var(--muted);

@@ -313,6 +313,30 @@ function bindShapes() {
   });
 }
 
+// In the experience list the swarm spells the year of the job you are reading, and that job
+// lights up. Wide screens only: on a phone the year would sit on top of the text.
+const jobEls = [...document.querySelectorAll<HTMLElement>('.job')];
+const yearShapes = experience.map((job) => textShape([job.period.slice(0, 4)], 'side'));
+function bindYears() {
+  const list = $('.experience__list');
+  ScrollTrigger.create({
+    trigger: list,
+    start: 'top 62%',
+    end: 'bottom 48%',
+    onUpdate() {
+      const line = window.innerHeight * 0.55;
+      let current = jobEls.findIndex((el) => el.getBoundingClientRect().bottom > line);
+      if (current < 0) current = jobEls.length - 1;
+      jobEls.forEach((el, i) => el.classList.toggle('is-current', i === current));
+      if (window.innerWidth >= 900) swarm?.setShape(yearShapes[current]);
+    },
+    onToggle(self) {
+      list.classList.toggle('is-reading', self.isActive);
+      if (!self.isActive && activeShape === 'drift') swarm?.setShape(shapes.drift);
+    },
+  });
+}
+
 if (!reducedMotion) {
   // The statement lights up word by word as you read it.
   gsap.fromTo(
@@ -355,6 +379,7 @@ async function intro() {
     loadPortrait(`${import.meta.env.BASE_URL}portrait.png`).catch((err) => console.warn('Portrait failed to load', err)),
   ]);
   bindShapes();
+  bindYears();
   ScrollTrigger.refresh();
   if (reducedMotion) return;
   gsap.from('.bar > *', { opacity: 0, y: -12, duration: 1, stagger: 0.08, delay: 1.1, ease: 'expo.out' });

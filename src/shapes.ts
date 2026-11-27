@@ -70,7 +70,7 @@ function drawText(ctx: CanvasRenderingContext2D, lines: string[], r: Region, str
   });
 }
 
-export function textShape(lines: string[], place: 'center' | 'top' = 'center'): Shape {
+export function textShape(lines: string[], place: 'center' | 'top' | 'side' = 'center'): Shape {
   return {
     wobble: 0.7,
     alpha: 1,
