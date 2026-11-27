@@ -144,6 +144,10 @@ main,
   gap: clamp(1rem, 3vw, 2.5rem);
 }
 
+.bar__deck {
+  color: var(--signal);
+}
+
 .bar__clock {
   justify-self: end;
   color: var(--muted);

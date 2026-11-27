@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>To scale · Titus Driessen</title>
+    <meta name="description" content="Three numbers from Titus Driessen's work, built in 3D at their real size." />
+    <meta name="theme-color" content="#09090b" />
+    <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
+  </head>
+  <body>
+    <canvas id="stage" aria-hidden="true"></canvas>
+    <div class="scrim"></div>
+    <div class="veil" data-veil></div>
+
+    <header class="top">
+      <a href="./">Back to the site</a>
+      <p data-count aria-live="polite"></p>
+    </header>
+
+    <main>
+      <div class="text" data-text data-place="bottom">
+        <h1 data-title></h1>
+        <p data-sub></p>
+        <div class="outro" data-outro hidden>
+          <a class="outro__main" href="./#ask">Ask the AI about me</a>
+          <a href="./#contact">Get in touch</a>
+        </div>
+      </div>
+      <p class="fallback">This page needs WebGL to show the 3D scenes. <a href="./">Go back to the site.</a></p>
+    </main>
+
+    <nav class="controls" aria-label="Slides">
+      <div class="dots" data-dots aria-hidden="true"></div>
+      <button type="button" data-prev aria-label="Previous">Back</button>
+      <button type="button" data-next aria-label="Next">Next</button>
+    </nav>
+
+    <script type="module" src="/src/deck/main.ts"></script>
+  </body>
+</html>
