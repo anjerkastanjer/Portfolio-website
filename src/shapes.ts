@@ -83,9 +83,9 @@ export function textShape(lines: string[], place: 'center' | 'top' | 'side' = 'c
 /* ---------- Portrait ---------- */
 
 let portrait: ImageData | null = null;
+let depthMap: ImageData | null = null;
 
-/** Load the cut-out portrait once; the face shape reads its pixels. */
-export async function loadPortrait(src: string) {
+async function readImage(src: string) {
   const img = new Image();
   img.src = src;
   await img.decode();
@@ -93,7 +93,15 @@ export async function loadPortrait(src: string) {
   c.width = c.height = 200;
   const ctx = c.getContext('2d', { willReadFrequently: true })!;
   ctx.drawImage(img, 0, 0, 200, 200);
-  portrait = ctx.getImageData(0, 0, 200, 200);
+  return ctx.getImageData(0, 0, 200, 200);
+}
+
+/**
+ * Load the cut-out portrait and its depth map once; the face shape reads their pixels.
+ * The depth map was sculpted around the detected eyes, nose, mouth and chin (see README).
+ */
+export async function loadPortrait(src: string, depthSrc: string) {
+  [portrait, depthMap] = await Promise.all([readImage(src), readImage(depthSrc).catch(() => null)]);
 }
 
 const faceBox = (w: number, h: number) => square(region(w, h, 'side'), isWide(w) ? 1 : 1.15);
@@ -128,10 +136,16 @@ const face: Shape = {
       const v = (py / ph) * 2 - 1;
       const fade = v > 0.5 ? Math.max(0, 1 - (v - 0.5) / 0.45) : 1;
       if (Math.random() > (0.02 + 0.98 * lum ** 2.4) * fade) continue;
-      const hv = v + 0.18;
-      const head = Math.sqrt(Math.max(0, 1 - u * u * 1.5 - hv * hv * 0.9));
-      const shoulders = v > 0.42 ? (v - 0.42) * 0.5 : 0;
-      const z = r.w * (0.3 * head + 0.04 * lum - shoulders);
+      let z: number;
+      if (depthMap) {
+        // The depth map stores 0..1.5 as 0..255; centred so the head turns around its own middle.
+        z = r.w * ((depthMap.data[i] / 255) * 1.5 * 0.3 - 0.17);
+      } else {
+        const hv = v + 0.18;
+        const head = Math.sqrt(Math.max(0, 1 - u * u * 1.5 - hv * hv * 0.9));
+        const shoulders = v > 0.42 ? (v - 0.42) * 0.5 : 0;
+        z = r.w * (0.3 * head + 0.04 * lum - shoulders);
+      }
       out[n * 3] = r.x + (px / pw) * r.w;
       out[n * 3 + 1] = r.y + (py / ph) * r.h;
       out[n * 3 + 2] = z;

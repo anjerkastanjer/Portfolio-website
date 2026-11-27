@@ -382,7 +382,7 @@ if (!reducedMotion) {
 async function intro() {
   await Promise.all([
     document.fonts.load(`800 100px "Anybody Variable"`).catch(() => undefined),
-    loadPortrait(`${import.meta.env.BASE_URL}portrait.png`).catch((err) => console.warn('Portrait failed to load', err)),
+    loadPortrait(`${import.meta.env.BASE_URL}portrait.png`, `${import.meta.env.BASE_URL}portrait-depth.png`).catch((err) => console.warn('Portrait failed to load', err)),
   ]);
   bindShapes();
   bindYears();
