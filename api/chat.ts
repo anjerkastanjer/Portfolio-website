@@ -115,21 +115,30 @@ export async function POST(request: Request): Promise<Response> {
       buffer += decoder.decode(value, { stream: true });
       const lines = buffer.split('\n');
       buffer = lines.pop() ?? '';
+      // The final event can arrive without a line break after it, so look at the leftover too.
+      if (buffer.trim() === 'data: [DONE]') {
+        lines.push(buffer);
+        buffer = '';
+      }
+      // Some providers keep the connection open after the last event; finish as soon as they
+      // say the answer is complete, instead of waiting for them to hang up.
+      let finished = false;
       for (const line of lines) {
         const data = line.startsWith('data:') ? line.slice(5).trim() : '';
-        // Some providers keep the connection open after the last event; finish as soon as it says so.
-        if (data === '[DONE]') {
-          controller.close();
-          reader.cancel().catch(() => undefined);
-          return;
-        }
-        if (!data) continue;
+        if (data === '[DONE]') finished = true;
+        if (!data || finished) continue;
         try {
-          const text = JSON.parse(data).choices?.[0]?.delta?.content;
+          const choice = JSON.parse(data).choices?.[0];
+          const text = choice?.delta?.content;
           if (typeof text === 'string' && text) controller.enqueue(encoder.encode(text));
+          if (choice?.finish_reason) finished = true;
         } catch {
           // a partial or non-JSON event; skip it
         }
+      }
+      if (finished) {
+        controller.close();
+        reader.cancel().catch(() => undefined);
       }
     },
     cancel: () => reader.cancel(),
