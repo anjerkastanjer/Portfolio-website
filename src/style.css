@@ -365,6 +365,59 @@ main,
   line-height: 1.5;
 }
 
+/* Mini-game */
+.game {
+  max-width: 34rem;
+  margin-top: 2rem;
+  padding: 1rem 1.15rem 1.15rem;
+  border: 1px solid rgb(244 241 234 / 0.25);
+  border-radius: 14px;
+  background: rgb(22 22 26 / 0.55);
+}
+
+.game [hidden] {
+  display: none;
+}
+
+.game__title {
+  font-family: var(--display);
+  font-size: 1.35rem;
+  font-weight: 700;
+}
+
+.game__intro p + p {
+  margin-top: 0.4rem;
+  color: rgb(244 241 234 / 0.85);
+  font-size: 1rem;
+}
+
+.game__start {
+  margin-top: 1rem;
+  padding: 0.55rem 1.4rem;
+  border: 0;
+  border-radius: 999px;
+  background: var(--signal);
+  color: var(--bg);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.game__canvas {
+  display: block;
+  width: 100%;
+  height: 340px;
+  border-radius: 8px;
+  background: rgb(9 9 11 / 0.6);
+  cursor: none;
+  touch-action: none;
+}
+
+.game__result {
+  margin-bottom: 0.25rem;
+  line-height: 1.5;
+}
+
 .project__link {
   display: inline-block;
   margin-top: 1.75rem;

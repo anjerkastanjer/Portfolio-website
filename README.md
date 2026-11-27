@@ -19,6 +19,8 @@ npm run build    # production build in dist/
 - `src/swarm.ts`: the particle engine (Three.js points, spring physics, 3D rotation).
 - `src/redact.ts`: the live PII redaction demo (a toy rules layer that runs in the browser).
 - `src/chat.ts` + `api/chat.ts`: the AI chat (browser side and the Vercel function behind it).
+- `src/game.ts`: the 30-second mini-game that scores you with F1.
+- `deck.html` + `src/deck/`: the separate 3D deck page (lit scenes, the numbers at real scale).
 - `src/main.ts`: scroll choreography (GSAP + Lenis), the draggable face, and the `/` command.
 - `public/portrait.png`: the cut-out photo the 3D face is sampled from.
 

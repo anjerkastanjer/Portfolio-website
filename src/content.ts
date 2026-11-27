@@ -74,6 +74,8 @@ export type Highlight = {
   shape: string;
   /** Adds the live redaction demo under the text. */
   demo?: boolean;
+  /** Adds the playable mini-game under the text. */
+  game?: boolean;
   link?: { href: string; label: string };
 };
 
@@ -110,6 +112,7 @@ export const highlights: Highlight[] = [
     body: 'Next to work I make games in Godot, like Sword of the Emperor, which I built with a team of three others. And a good part of what I have made for clients lives in private repositories. Ask me about it.',
     tags: ['Godot', 'GDScript', 'Game design'],
     shape: 'sprite',
+    game: true,
   },
 ];
 

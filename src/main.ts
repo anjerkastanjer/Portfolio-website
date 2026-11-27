@@ -8,6 +8,7 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { setupChat } from './chat';
 import { about, experience, highlights, profile, skills, statement } from './content';
 import { createRedactDemo } from './redact';
+import { createGame } from './game';
 import { loadPortrait, shapes, textShape, type Shape } from './shapes';
 import { Swarm } from './swarm';
 
@@ -80,6 +81,7 @@ $('[data-highlights]').append(
     if (h.demo) {
       inner.append(createRedactDemo('Mail Sanne at sanne@voorbeeld.nl or call 06 12345678. She lives at 1012 AB and her IBAN is NL91 ABNA 0417 1643 00.'));
     }
+    if (h.game) inner.append(createGame());
     if (h.link) inner.append(externalLink(h.link.href, h.link.label, 'project__link'));
     article.append(inner);
     return article;
@@ -173,7 +175,7 @@ if (swarm) {
   window.addEventListener('pointerup', (e) => e.pointerType === 'touch' && s.clearPointer());
   window.addEventListener('blur', () => s.clearPointer());
   window.addEventListener('pointerdown', (e) => {
-    if ((e.target as Element).closest('a, button, input, textarea, label, form, [data-face-stage]')) return;
+    if ((e.target as Element).closest('a, button, input, textarea, label, form, .game, [data-face-stage]')) return;
     s.shock(e.clientX, e.clientY);
   });
 }
