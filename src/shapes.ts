@@ -24,6 +24,8 @@ export type Shape = {
   solid?: boolean;
   /** Build the shape top to bottom like a scan, instead of the default left-to-right sweep. */
   scan?: boolean;
+  /** For solid 3D shapes: their radius in px, used to fade the far side. */
+  radius?: (w: number, h: number) => number;
   /** Particle size multiplier; smaller dots show more detail. */
   size?: number;
 };
@@ -108,9 +110,14 @@ export async function loadPortrait(src: string, depthSrc: string) {
 
 const faceBox = (w: number, h: number) => square(region(w, h, 'side'), isWide(w) ? 1 : 1.15);
 
+// The head as an ellipsoid, in fractions of the portrait's size. It matches the head in
+// tools/portrait-depth.py, so the sculpted front and the generated back meet at the edges.
+const HEAD = { cx: 0.4695, cy: 0.434, rx: 0.311, top: 0.404, bottom: 0.336, depth: 0.3 };
+
 /**
- * The portrait as a 3D point cloud. Bright pixels get more particles (a stipple), and depth comes
- * from an ellipsoid head shape plus a little extra for lit areas like the nose and cheeks.
+ * A full, round 3D head made of points. The front is the portrait as a stipple (bright pixels get
+ * more points) lifted by the sculpted depth map; the back is generated: a closed back of the head
+ * with hair down to the nape, so turning it never shows a hollow mask.
  */
 const face: Shape = {
   wobble: 0.5,
@@ -121,15 +128,19 @@ const face: Shape = {
   size: 0.74,
   pivot(w, h) {
     const r = faceBox(w, h);
-    return [r.x + r.w / 2, r.y + r.h * 0.42];
+    return [r.x + HEAD.cx * r.w, r.y + HEAD.cy * r.h];
   },
+  radius: (w, h) => faceBox(w, h).w * HEAD.depth,
   points(w, h, count) {
     const out = new Float32Array(count * 3);
     if (!portrait) return out;
     const r = faceBox(w, h);
     const { data, width: pw, height: ph } = portrait;
+    const backCount = depthMap ? Math.round(count * 0.3) : 0;
+    const frontCount = count - backCount;
     let n = 0;
-    for (let guard = 0; n < count && guard < count * 80; guard++) {
+
+    for (let guard = 0; n < frontCount && guard < count * 80; guard++) {
       const px = Math.random() * pw;
       const py = Math.random() * ph;
       const i = ((py | 0) * pw + (px | 0)) * 4;
@@ -141,20 +152,35 @@ const face: Shape = {
       if (Math.random() > (0.02 + 0.98 * lum ** 2.4) * fade) continue;
       let z: number;
       if (depthMap) {
-        // The depth map stores 0..1.5 as 0..255; centred so the head turns around its own middle.
-        z = r.w * ((depthMap.data[i] / 255) * 1.5 * 0.3 - 0.17);
+        // The depth map stores 0..1.5 as 0..255. Zero is the head's middle plane, so the
+        // face sits in front of it and the generated back of the head behind it.
+        z = r.w * (depthMap.data[i] / 255) * 1.5 * HEAD.depth;
       } else {
         const hv = v + 0.18;
         const head = Math.sqrt(Math.max(0, 1 - u * u * 1.5 - hv * hv * 0.9));
         const shoulders = v > 0.42 ? (v - 0.42) * 0.5 : 0;
-        z = r.w * (0.3 * head + 0.04 * lum - shoulders);
+        z = r.w * (0.3 * head + 0.04 * lum - shoulders - 0.17);
       }
       out[n * 3] = r.x + (px / pw) * r.w;
       out[n * 3 + 1] = r.y + (py / ph) * r.h;
       out[n * 3 + 2] = z;
       n++;
     }
-    for (let i = n; i < count; i++) out.copyWithin(i * 3, ((Math.random() * n) | 0) * 3, ((Math.random() * n) | 0) * 3 + 3);
+    for (let i = n; i < frontCount; i++) out.copyWithin(i * 3, ((Math.random() * n) | 0) * 3, ((Math.random() * n) | 0) * 3 + 3);
+
+    // The back of the head: hair over the whole back half, down to the nape of the neck.
+    for (let i = frontCount; i < count; ) {
+      const a = Math.random() * 2 - 1;
+      const b = Math.random() * 1.75 - 1; // from the crown down to 0.75 of the way to the jaw
+      const inside = 1 - a * a - b * b;
+      if (inside <= 0) continue;
+      // Slightly bumpy, so it reads as hair rather than a smooth shell.
+      const tuft = 1.03 + 0.03 * Math.sin(a * 23 + b * 9) * Math.sin(b * 17 - a * 5) + Math.random() * 0.03;
+      out[i * 3] = r.x + (HEAD.cx + a * HEAD.rx * tuft) * r.w;
+      out[i * 3 + 1] = r.y + (HEAD.cy + b * (b < 0 ? HEAD.top : HEAD.bottom)) * r.h;
+      out[i * 3 + 2] = -r.w * HEAD.depth * Math.sqrt(inside) * tuft;
+      i++;
+    }
     return out;
   },
 };
