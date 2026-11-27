@@ -623,6 +623,18 @@ main,
   color: var(--signal);
 }
 
+.contact__status {
+  min-height: 1.6em;
+  margin-top: -1rem;
+  color: var(--signal);
+  opacity: 0;
+  transition: opacity 0.4s var(--ease-out);
+}
+
+.contact__status.is-visible {
+  opacity: 1;
+}
+
 /* ---------- Footer ---------- */
 
 .foot {

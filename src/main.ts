@@ -110,6 +110,25 @@ $('[data-links]').append(
     }),
 );
 
+// Many people have no mail app set up, so a mailto link alone does nothing for them.
+// Clicking Email also copies the address and says so.
+const contactStatus = $('[data-contact-status]');
+let statusTimer = 0;
+document.querySelector('a[href^="mailto:"]')?.addEventListener('click', () => {
+  const show = (text: string) => {
+    contactStatus.textContent = text;
+    contactStatus.classList.add('is-visible');
+    clearTimeout(statusTimer);
+    statusTimer = window.setTimeout(() => contactStatus.classList.remove('is-visible'), 5000);
+  };
+  // Show the address straight away; copying can be blocked or slow, and must never hide it.
+  show(`You can reach me at ${profile.email}.`);
+  navigator.clipboard?.writeText(profile.email).then(
+    () => show(`Copied ${profile.email} to your clipboard.`),
+    () => undefined,
+  );
+});
+
 /* ---------- Clock ---------- */
 
 const clock = $('[data-clock]');
