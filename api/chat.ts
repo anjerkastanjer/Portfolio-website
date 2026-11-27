@@ -117,7 +117,13 @@ export async function POST(request: Request): Promise<Response> {
       buffer = lines.pop() ?? '';
       for (const line of lines) {
         const data = line.startsWith('data:') ? line.slice(5).trim() : '';
-        if (!data || data === '[DONE]') continue;
+        // Some providers keep the connection open after the last event; finish as soon as it says so.
+        if (data === '[DONE]') {
+          controller.close();
+          reader.cancel().catch(() => undefined);
+          return;
+        }
+        if (!data) continue;
         try {
           const text = JSON.parse(data).choices?.[0]?.delta?.content;
           if (typeof text === 'string' && text) controller.enqueue(encoder.encode(text));
