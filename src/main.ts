@@ -474,6 +474,16 @@ $('[data-open-tricks]').addEventListener('click', () => tricks.showModal());
 // Clicking the backdrop closes it too.
 tricks.addEventListener('click', (e) => e.target === tricks && tricks.close());
 
+// Hovering a skill makes the swarm spell it behind the list; leaving the list lets it go.
+// Pointer devices only: on touch screens a tap should not repaint the background.
+if (window.matchMedia('(hover: hover)').matches) {
+  const skillList = $('[data-skills]');
+  skillList.querySelectorAll('li').forEach((li) =>
+    li.addEventListener('pointerenter', () => swarm?.setShape(textShape(toLines(li.textContent ?? ''), 'center', 0.26))),
+  );
+  skillList.addEventListener('pointerleave', () => activeShape && swarm?.setShape(shapeFor(activeShape)));
+}
+
 $('[data-open-say]').addEventListener('click', openSay);
 $('[data-open-draw]').addEventListener('click', () => draw.open());
 window.addEventListener('keydown', (e) => {

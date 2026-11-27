@@ -857,11 +857,20 @@ main,
 }
 
 .skills__group li {
+  width: fit-content;
   font-family: var(--display);
   font-size: clamp(1.35rem, 2.2vw, 2rem);
   font-weight: 600;
   font-stretch: 90%;
   line-height: 1.3;
+  transition: color 0.25s, font-stretch 0.4s var(--ease-out);
+}
+
+@media (hover: hover) {
+  .skills__group li:hover {
+    color: var(--signal);
+    font-stretch: 110%;
+  }
 }
 
 /* ---------- Contact ---------- */

@@ -74,10 +74,10 @@ function drawText(ctx: CanvasRenderingContext2D, lines: string[], r: Region, str
   });
 }
 
-export function textShape(lines: string[], place: 'center' | 'top' | 'side' = 'center'): Shape {
+export function textShape(lines: string[], place: 'center' | 'top' | 'side' = 'center', alpha = 1): Shape {
   return {
     wobble: 0.7,
-    alpha: 1,
+    alpha,
     depth: 44,
     // Narrow screens get condensed letters, so the name can be set larger.
     draw: (ctx, w, h) => drawText(ctx, lines, region(w, h, place), isWide(w) ? 'semi-expanded' : 'condensed'),
