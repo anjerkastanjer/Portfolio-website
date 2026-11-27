@@ -224,6 +224,50 @@ main,
   line-height: 1.35;
 }
 
+.hero__proof {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 1.25rem;
+  margin-top: 1rem;
+  font-size: 0.95rem;
+}
+
+.hero__proof a {
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+  transition: color 0.2s;
+}
+
+.hero__proof a:hover {
+  color: var(--paper);
+}
+
+.hero__proof li + li::before {
+  content: '';
+  display: inline-block;
+  width: 4px;
+  height: 4px;
+  margin-right: 1.25rem;
+  border-radius: 50%;
+  background: var(--signal);
+  vertical-align: middle;
+}
+
+.hero__cta {
+  display: inline-block;
+  margin-top: 1.25rem;
+  padding: 0.65rem 1.4rem;
+  border-radius: 999px;
+  background: var(--signal);
+  color: var(--bg);
+  font-weight: 700;
+  transition: transform 0.3s var(--ease-out);
+}
+
+.hero__cta:hover {
+  transform: translateY(-2px);
+}
+
 .hero__hint {
   color: var(--muted);
   font-size: 0.95rem;

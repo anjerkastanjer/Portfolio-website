@@ -5,7 +5,7 @@ import './style.css';
 
 import { gsap } from 'gsap';
 import { shapes, textShape } from './shapes';
-import { Swarm } from './swarm';
+import { Swarm, onViewportChange } from './swarm';
 
 const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 let swarm: Swarm | null = null;
@@ -19,7 +19,7 @@ try {
 if (swarm) {
   const s = swarm;
   gsap.ticker.add(() => s.tick());
-  window.addEventListener('resize', () => s.resize());
+  onViewportChange(() => s.resize());
   window.addEventListener('pointermove', (e) => s.setPointer(e.clientX, e.clientY), { passive: true });
   window.addEventListener('pointerdown', (e) => {
     if (!(e.target as Element).closest('a')) s.shock(e.clientX, e.clientY);

@@ -56,6 +56,28 @@ const fragmentShader = /* glsl */ `
   }
 `;
 
+/**
+ * Call back after a real change of viewport size, not on every resize event. On phones the
+ * address bar sliding in and out while scrolling changes the height by roughly 50-120 px;
+ * rebuilding the swarm for that wipes the trails and makes shapes jump mid-scroll.
+ */
+export function onViewportChange(callback: () => void, delay = 150) {
+  let width = window.innerWidth;
+  let height = window.innerHeight;
+  let timer = 0;
+  window.addEventListener('resize', () => {
+    clearTimeout(timer);
+    timer = window.setTimeout(() => {
+      const w = window.innerWidth;
+      const h = window.innerHeight;
+      if (w === width && Math.abs(h - height) < 150) return;
+      width = w;
+      height = h;
+      callback();
+    }, delay);
+  });
+}
+
 const wrapAngle = (a: number) => a - Math.round(a / (Math.PI * 2)) * Math.PI * 2;
 
 /**
@@ -212,7 +234,8 @@ export class Swarm {
     this.height = window.innerHeight;
     const dpr = Math.min(window.devicePixelRatio, 2);
     this.renderer.setPixelRatio(dpr);
-    this.renderer.setSize(this.width, this.height, false);
+    // Fixed pixel size (not 100%), so ignoring a small height change never stretches the swarm.
+    this.renderer.setSize(this.width, this.height, true);
     this.renderer.clear();
     this.material.uniforms.uPixelRatio.value = dpr;
     this.camera.right = this.width;

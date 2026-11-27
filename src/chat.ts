@@ -46,11 +46,19 @@ export function setupChat(root: HTMLElement, { email, suggestions, onBusy, onRes
 
     add('ask__q', question);
     const answer = add('ask__a is-waiting', '');
+    // Screen readers: say that an answer is coming, and read the answer once, when it is
+    // complete, instead of re-reading it after every streamed piece.
+    const thinking = document.createElement('span');
+    thinking.className = 'sr-only';
+    thinking.textContent = 'Thinking…';
+    answer.append(thinking);
+    log.setAttribute('aria-busy', 'true');
     onResize();
     history.push({ role: 'user', content: question });
 
     let text = '';
     let failure = '';
+    let cutOff = false;
     try {
       const res = await fetch('/api/chat', {
         method: 'POST',
@@ -73,11 +81,18 @@ export function setupChat(root: HTMLElement, { email, suggestions, onBusy, onRes
         if (!text.trim()) failure = failures.error;
       }
     } catch {
-      failure = text ? '' : failures.offline;
+      // The connection dropped. With part of an answer, keep it but say so, and don't keep
+      // the half answer as context for the next question.
+      if (text) cutOff = true;
+      else failure = failures.offline;
     }
 
     answer.classList.remove('is-waiting');
-    if (failure) {
+    log.setAttribute('aria-busy', 'false');
+    if (cutOff) {
+      answer.textContent = `${text}… (the answer was cut off; try asking again)`;
+      history.pop();
+    } else if (failure) {
       answer.textContent = failure;
       answer.classList.add('is-error');
       history.pop(); // the question went unanswered; don't send it again as context
@@ -95,7 +110,11 @@ export function setupChat(root: HTMLElement, { email, suggestions, onBusy, onRes
     const b = document.createElement('button');
     b.type = 'button';
     b.textContent = s;
-    b.addEventListener('click', () => ask(s));
+    b.addEventListener('click', () => {
+      // The suggestions hide while answering; keep keyboard focus where the conversation is.
+      input.focus();
+      ask(s);
+    });
     li.append(b);
     chips.append(li);
   }

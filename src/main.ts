@@ -12,7 +12,7 @@ import { createGame } from './game';
 import { setupDraw } from './draw';
 import { Sound } from './sound';
 import { loadPortrait, shapes, textShape, type Shape } from './shapes';
-import { Swarm } from './swarm';
+import { Swarm, onViewportChange } from './swarm';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -41,6 +41,20 @@ function externalLink(href: string, label: string, className: string) {
 $('[data-first]').textContent = profile.firstLine;
 $('[data-second]').textContent = profile.secondLine;
 $('[data-lede]').textContent = profile.lede;
+// The three strongest numbers, straight under the intro, each linking to its story.
+$('[data-proof]').append(
+  ...highlights
+    .filter((h) => h.id !== 'games')
+    .slice(0, 3)
+    .map((h) => {
+      const li = el('li');
+      const a = el('a', '', h.metric);
+      a.href = `#${h.id}`;
+      a.dataset.scroll = '';
+      li.append(a);
+      return li;
+    }),
+);
 $('[data-city]').textContent = profile.city;
 
 const statementEl = $('[data-statement]');
@@ -162,7 +176,7 @@ const pointer = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
 if (swarm) {
   const s = swarm;
   gsap.ticker.add(() => s.tick());
-  window.addEventListener('resize', () => s.resize());
+  onViewportChange(() => s.resize());
 
   window.addEventListener(
     'pointermove',

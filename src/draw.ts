@@ -99,7 +99,12 @@ export function setupDraw(onShape: (shape: Shape) => void, onClose: () => void) 
     redraw();
   });
   overlay.querySelector('.draw__done')!.addEventListener('click', close);
-  window.addEventListener('resize', () => !overlay.hidden && fit());
+  // Debounced: the drawing canvas must still match the screen, so no size threshold here.
+  let resizeTimer = 0;
+  window.addEventListener('resize', () => {
+    clearTimeout(resizeTimer);
+    resizeTimer = window.setTimeout(() => !overlay.hidden && fit(), 150);
+  });
 
   function open() {
     strokes.length = 0;

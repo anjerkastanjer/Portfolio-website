@@ -81,6 +81,8 @@ export async function POST(request: Request): Promise<Response> {
   if (!turns) return json(400, { error: 'bad_request' });
 
   let upstream: Response;
+  const connect = new AbortController();
+  const connectTimer = setTimeout(() => connect.abort(), 30_000);
   try {
     upstream = await fetch(`${AI_BASE_URL.replace(/\/+$/, '')}/chat/completions`, {
       method: 'POST',
@@ -92,9 +94,13 @@ export async function POST(request: Request): Promise<Response> {
         temperature: 0.4,
         messages: [{ role: 'system', content: system }, ...turns],
       }),
-      signal: AbortSignal.timeout(30_000),
+      // A time limit on getting an answer started, not on the whole answer: the timer is
+      // cleared as soon as the provider responds, so a long answer isn't cut off mid-way.
+      signal: connect.signal,
     });
+    clearTimeout(connectTimer);
   } catch (err) {
+    clearTimeout(connectTimer);
     console.error('chat: provider unreachable', err);
     return json(502, { error: 'upstream' });
   }
@@ -113,10 +119,12 @@ export async function POST(request: Request): Promise<Response> {
     async pull(controller) {
       // Safety net: some streams never send an end signal. Once the answer has started,
       // four quiet seconds mean it is over.
-      const quiet = new Promise<{ done: true; value?: undefined }>((resolve) =>
-        setTimeout(() => resolve({ done: true }), started ? 4000 : 30_000),
-      );
+      let quietTimer = 0 as unknown as ReturnType<typeof setTimeout>;
+      const quiet = new Promise<{ done: true; value?: undefined }>((resolve) => {
+        quietTimer = setTimeout(() => resolve({ done: true }), started ? 4000 : 30_000);
+      });
       const { done, value } = await Promise.race([reader.read(), quiet]);
+      clearTimeout(quietTimer);
       if (done) {
         reader.cancel().catch(() => undefined);
         return controller.close();
