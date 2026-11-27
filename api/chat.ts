@@ -108,10 +108,20 @@ export async function POST(request: Request): Promise<Response> {
   const decoder = new TextDecoder();
   const encoder = new TextEncoder();
   let buffer = '';
+  let started = false;
   const stream = new ReadableStream<Uint8Array>({
     async pull(controller) {
-      const { done, value } = await reader.read();
-      if (done) return controller.close();
+      // Safety net: some streams never send an end signal. Once the answer has started,
+      // four quiet seconds mean it is over.
+      const quiet = new Promise<{ done: true; value?: undefined }>((resolve) =>
+        setTimeout(() => resolve({ done: true }), started ? 4000 : 30_000),
+      );
+      const { done, value } = await Promise.race([reader.read(), quiet]);
+      if (done) {
+        reader.cancel().catch(() => undefined);
+        return controller.close();
+      }
+      started = true;
       buffer += decoder.decode(value, { stream: true });
       const lines = buffer.split('\n');
       buffer = lines.pop() ?? '';
