@@ -14,6 +14,25 @@ const SAFE = [
 
 const DURATION = 30;
 const MY_F1 = 0.998;
+const BEST_KEY = 'filter-game-best';
+
+// The visitor's best score lives in their own browser only. Storage can be blocked
+// (private windows, strict settings), so every access is wrapped.
+function readBest(): number | null {
+  try {
+    const v = Number.parseFloat(localStorage.getItem(BEST_KEY) ?? '');
+    return Number.isFinite(v) ? v : null;
+  } catch {
+    return null;
+  }
+}
+function saveBest(v: number) {
+  try {
+    localStorage.setItem(BEST_KEY, String(v));
+  } catch {
+    // not saved; the score still shows for this visit
+  }
+}
 
 type Item = { text: string; pii: boolean; x: number; y: number; w: number; speed: number; hit: number };
 
@@ -165,7 +184,11 @@ export function createGame(): HTMLElement {
     result.hidden = false;
     const verdict =
       f1 >= MY_F1 ? 'You beat my detector. Want a job?' : f1 >= 0.9 ? 'Sharp. But my detector still wins.' : 'Reading fast is hard. That is why I built a detector.';
-    result.textContent = `You caught ${caught}, missed ${missed} and raised ${falseAlarms} false alarm${falseAlarms === 1 ? '' : 's'}. That is an F1 of ${f1.toFixed(3)}. Mine scores ${MY_F1} on 350,000 of these. ${verdict}`;
+    const best = readBest();
+    const record = best === null || f1 > best;
+    if (record) saveBest(f1);
+    const bestLine = best === null ? '' : record ? ` New personal best, up from ${best.toFixed(3)}.` : ` Your best so far: ${best.toFixed(3)}.`;
+    result.textContent = `You caught ${caught}, missed ${missed} and raised ${falseAlarms} false alarm${falseAlarms === 1 ? '' : 's'}. That is an F1 of ${f1.toFixed(3)}. Mine scores ${MY_F1} on 350,000 of these. ${verdict}${bestLine}`;
     start.textContent = 'Play again';
     intro.hidden = false;
     intro.querySelectorAll('p').forEach((p) => (p.hidden = true));
