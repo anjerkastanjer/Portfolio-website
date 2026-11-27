@@ -139,10 +139,16 @@ export function createGame(): HTMLElement {
     ctx.roundRect(bx, by, bw, 10, 5);
     ctx.fill();
 
+    // The score sits on a dark band so falling words never run through it.
+    ctx.fillStyle = 'rgb(9 9 11 / 0.85)';
+    ctx.fillRect(0, 0, w, 30);
     ctx.fillStyle = muted;
-    ctx.font = '500 14px "Instrument Sans Variable", system-ui, sans-serif';
+    const narrow = w < 460;
+    ctx.font = `500 ${narrow ? 12 : 14}px "Instrument Sans Variable", system-ui, sans-serif`;
     ctx.fillText(`${Math.max(0, Math.ceil(timeLeft))}s`, 10, 20);
-    const score = `caught ${caught}   missed ${missed}   false alarms ${falseAlarms}`;
+    const score = narrow
+      ? `caught ${caught}  missed ${missed}  false ${falseAlarms}`
+      : `caught ${caught}   missed ${missed}   false alarms ${falseAlarms}`;
     ctx.fillText(score, w - ctx.measureText(score).width - 10, 20);
 
     if (timeLeft <= 0 && items.length === 0) return finish();
