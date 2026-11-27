@@ -206,8 +206,16 @@ const face: Shape = {
       if (Math.random() > (0.02 + 0.98 * lum ** 2.4) * fade) continue;
       const hv = v + 0.18;
       const head = Math.sqrt(Math.max(0, 1 - u * u * 1.5 - hv * hv * 0.9));
-      const shoulders = v > 0.42 ? (v - 0.42) * 0.5 : 0;
-      const z = r.w * (0.3 * head + 0.04 * lum - shoulders);
+      const face = 0.3 * head + 0.04 * lum;
+      // Below the chin (v ≈ 0.42) the head's egg shape would keep the neck as far forward as
+      // the face. A real neck sits back under the head: a narrow cylinder, then shoulders
+      // that slope further back. Blend into it over the jaw line so there is no step.
+      const neck = 0.1 * Math.sqrt(Math.max(0, 1 - (u / 0.32) ** 2)) - 0.02;
+      const shoulders = 0.06 - Math.max(0, v - 0.55) * 0.35;
+      const body = Math.max(neck, shoulders);
+      const t = Math.min(1, Math.max(0, (v - 0.3) / 0.18));
+      const blend = t * t * (3 - 2 * t);
+      const z = r.w * (face * (1 - blend) + body * blend);
       out[n * 3] = r.x + (px / pw) * r.w;
       out[n * 3 + 1] = r.y + (py / ph) * r.h;
       out[n * 3 + 2] = z;
