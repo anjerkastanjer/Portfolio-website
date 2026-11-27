@@ -114,6 +114,12 @@ export class Swarm {
   private readonly pivot = new THREE.Vector2();
   private readonly pivotGoal = new THREE.Vector2();
   private lastFrame = performance.now();
+  private geometry!: THREE.BufferGeometry;
+  /** How many particles are simulated and drawn; lowered on machines that can't keep up. */
+  private active = 0;
+  private frameMs = 16.7;
+  private lastCut = 0;
+  private readonly bornAt = performance.now();
 
   constructor(
     canvas: HTMLCanvasElement,
@@ -184,6 +190,8 @@ export class Swarm {
         uSignal: { value: SIGNAL },
       },
     });
+    this.geometry = geometry;
+    this.active = n;
     const points = new THREE.Points(geometry, this.material);
     points.frustumCulled = false;
     this.scene.add(points);
@@ -359,6 +367,7 @@ export class Swarm {
   /** Advance the simulation and draw a frame. Call from the animation loop. */
   tick() {
     const now = performance.now();
+    this.adaptQuality(now - this.lastFrame, now);
     // Fixed 60 Hz steps, so the motion is the same on a 30 Hz phone and a 144 Hz monitor.
     let elapsed = Math.min((now - this.lastFrame) / 1000, 0.1);
     this.lastFrame = now;
@@ -371,6 +380,21 @@ export class Swarm {
     this.speedAttr.needsUpdate = true;
     this.renderer.render(this.fadeScene, this.fadeCamera);
     this.renderer.render(this.scene, this.camera);
+  }
+
+  /**
+   * Keep it smooth on slower machines: if frames take longer than about 26 ms (under ~38 fps)
+   * for a while, draw and simulate fewer particles, step by step, never below 5,000.
+   * The first seconds after loading don't count (fonts, images and shaders are still loading),
+   * and gaps over 100 ms are ignored: that is a background tab or a hiccup, not a slow machine.
+   */
+  private adaptQuality(frame: number, now: number) {
+    if (frame > 100 || now < this.bornAt + 4000) return;
+    this.frameMs += (frame - this.frameMs) * 0.03;
+    if (this.frameMs < 26 || this.active <= 5000 || now - this.lastCut < 2000) return;
+    this.lastCut = now;
+    this.active = Math.max(5000, Math.round(this.active * 0.8));
+    this.geometry.setDrawRange(0, this.active);
   }
 
   private step(dt: number) {
@@ -415,7 +439,7 @@ export class Swarm {
     const R = Math.max(90, Math.min(this.width, this.height) * 0.14);
     const R2 = R * R;
 
-    for (let i = 0; i < this.count; i++) {
+    for (let i = 0; i < this.active; i++) {
       const i3 = i * 3;
       if (t >= release[i]) {
         release[i] = Infinity;
