@@ -18,10 +18,22 @@ npm run build    # production build in dist/
 - `src/shapes.ts`: everything the swarm can turn into. A shape is just a drawing on a canvas.
 - `src/swarm.ts`: the particle engine (Three.js points, spring physics, 3D rotation).
 - `src/redact.ts`: the live PII redaction demo (a toy rules layer that runs in the browser).
+- `src/chat.ts` + `api/chat.ts`: the AI chat (browser side and the Vercel function behind it).
 - `src/main.ts`: scroll choreography (GSAP + Lenis), the draggable face, and the `/` command.
 - `public/portrait.png`: the cut-out photo the 3D face is sampled from.
 
-## Deploy
+## Deploy (Vercel)
 
-Pushing to `main` builds and deploys to GitHub Pages via `.github/workflows/deploy.yml`.
-One-time setup: repo **Settings → Pages → Source: GitHub Actions**.
+The site is hosted on Vercel: import this repo at vercel.com and every push to `main` deploys.
+
+The "Ask" chat runs through `api/chat.ts` and works with any provider that has an OpenAI-compatible
+chat endpoint (for example the free tiers of Google Gemini or Groq). Set three environment variables
+in Vercel under Settings → Environment Variables, then redeploy:
+
+| Variable | Value |
+| --- | --- |
+| `AI_API_KEY` | your API key from the provider |
+| `AI_BASE_URL` | the provider's OpenAI-compatible base URL, e.g. `https://generativelanguage.googleapis.com/v1beta/openai` or `https://api.groq.com/openai/v1` |
+| `AI_MODEL` | a chat model name from that provider |
+
+Without them the site still works; the chat just says it is not connected.

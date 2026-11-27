@@ -9,7 +9,6 @@
     <meta property="og:title" content="Titus Driessen" />
     <meta property="og:description" content="AI engineer and full-stack developer in Amsterdam." />
     <meta property="og:type" content="website" />
-    <meta property="og:url" content="https://anjerkastanjer.github.io/Portfolio-website/" />
     <meta property="og:image" content="https://anjerkastanjer.github.io/Portfolio-website/og.png" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
@@ -24,6 +23,7 @@
       <a class="bar__name" href="#top" data-scroll>Titus Driessen</a>
       <nav class="bar__nav" aria-label="Sections">
         <a href="#about" data-scroll>About</a>
+        <a href="#ask" data-scroll>Ask</a>
         <a href="#work" data-scroll>Work</a>
         <a href="#contact" data-scroll>Contact</a>
       </nav>
@@ -52,6 +52,20 @@
         <div class="about__stage" data-face-stage>
           <img class="about__photo" src="./portrait.png" alt="Portrait of Titus Driessen" width="320" height="320" />
           <p class="about__hint">Drag to turn my head</p>
+        </div>
+      </section>
+
+      <section class="ask" id="ask" data-shape="mind" aria-labelledby="ask-title">
+        <div class="ask__inner">
+          <h2 class="ask__title" id="ask-title">Ask the swarm about me</h2>
+          <p class="ask__intro">An AI assistant that knows my CV. Ask it what you would ask me in a first call.</p>
+          <div class="ask__log" data-ask-log aria-live="polite"></div>
+          <ul class="ask__suggestions" data-ask-suggestions aria-label="Example questions"></ul>
+          <form class="ask__form" data-ask-form>
+            <label class="sr-only" for="ask-input">Your question</label>
+            <input id="ask-input" maxlength="300" autocomplete="off" placeholder="What would you like to know?" />
+            <button type="submit">Ask</button>
+          </form>
         </div>
       </section>
 

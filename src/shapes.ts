@@ -177,6 +177,40 @@ const sprite: Shape = {
   },
 };
 
+/** A sphere of points: the assistant. It turns slowly, and faster while it is answering. */
+function mindShape(spin: number, wobble: number): Shape {
+  return {
+    wobble,
+    alpha: 1,
+    solid: true,
+    spin,
+    size: 0.8,
+    pivot(w, h) {
+      const r = region(w, h, 'side');
+      return [r.x + r.w / 2, r.y + r.h / 2];
+    },
+    points(w, h, count) {
+      const r = square(region(w, h, 'side'), 0.9);
+      const cx = r.x + r.w / 2;
+      const cy = r.y + r.h / 2;
+      const radius = r.w * 0.42;
+      const golden = Math.PI * (3 - Math.sqrt(5));
+      const out = new Float32Array(count * 3);
+      for (let i = 0; i < count; i++) {
+        // most points on the shell, a fifth scattered inside as a core
+        const shell = i % 5 ? 1 : Math.cbrt(Math.random()) * 0.55;
+        const y = 1 - ((i + 0.5) / count) * 2;
+        const ring = Math.sqrt(1 - y * y);
+        const a = i * golden;
+        out[i * 3] = cx + Math.cos(a) * ring * radius * shell;
+        out[i * 3 + 1] = cy + y * radius * shell;
+        out[i * 3 + 2] = Math.sin(a) * ring * radius * shell;
+      }
+      return out;
+    },
+  };
+}
+
 /** A paragraph of thin "text" lines, with some words blacked out as detected personal data. */
 const redact: Shape = {
   wobble: 1,
@@ -286,6 +320,8 @@ export const shapes: Record<string, Shape> = {
   drift,
   face,
   sprite,
+  mind: mindShape(0.3, 1.5),
+  mindBusy: mindShape(2.2, 7),
   redact,
   sheet,
   hub,

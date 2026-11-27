@@ -470,6 +470,154 @@ main,
   white-space: nowrap;
 }
 
+/* ---------- Ask (AI chat) ---------- */
+
+.ask {
+  display: grid;
+  align-items: center;
+  min-height: 100vh;
+  min-height: 100svh;
+  padding: 14vh var(--gutter);
+}
+
+.ask__inner {
+  width: min(46vw, 38rem);
+}
+
+.ask__title {
+  font-family: var(--display);
+  font-size: clamp(2.2rem, 4.2vw, 4.5rem);
+  font-weight: 800;
+  font-stretch: 105%;
+  line-height: 0.98;
+}
+
+.ask__intro {
+  max-width: 32rem;
+  margin-top: 1.25rem;
+  color: rgb(244 241 234 / 0.88);
+}
+
+.ask__log {
+  display: grid;
+  gap: 0.6rem;
+  margin-top: 1.75rem;
+}
+
+.ask__log:empty {
+  display: none;
+}
+
+.ask__q {
+  justify-self: end;
+  max-width: 85%;
+  padding: 0.5rem 0.9rem;
+  border-radius: 14px 14px 4px 14px;
+  background: var(--paper);
+  color: var(--bg);
+}
+
+.ask__a {
+  max-width: 95%;
+  min-height: 1.55em;
+  margin-bottom: 0.6rem;
+  white-space: pre-wrap;
+}
+
+.ask__a.is-error {
+  color: var(--muted);
+}
+
+/* three dots while the answer is on its way */
+.ask__a.is-waiting::before {
+  content: '';
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--signal);
+  box-shadow: 12px 0 var(--signal), 24px 0 var(--signal);
+  animation: waiting 1s infinite ease-in-out;
+}
+
+@keyframes waiting {
+  50% {
+    opacity: 0.25;
+  }
+}
+
+.ask__suggestions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 1.75rem;
+}
+
+.ask__suggestions[hidden] {
+  display: none;
+}
+
+.ask__suggestions button {
+  padding: 0.45rem 0.9rem;
+  border: 1px solid rgb(244 241 234 / 0.3);
+  border-radius: 999px;
+  background: none;
+  color: var(--paper);
+  font: inherit;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: border-color 0.2s, color 0.2s;
+}
+
+.ask__suggestions button:hover {
+  border-color: var(--signal);
+  color: var(--signal);
+}
+
+.ask__form {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 1rem;
+  padding: 0.4rem 0.4rem 0.4rem 1.1rem;
+  border: 1px solid rgb(244 241 234 / 0.3);
+  border-radius: 999px;
+  background: rgb(22 22 26 / 0.7);
+}
+
+.ask__form:focus-within {
+  border-color: var(--signal);
+}
+
+.ask__form input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  background: none;
+  color: var(--paper);
+  font: inherit;
+  outline: none;
+}
+
+.ask__form input::placeholder {
+  color: rgb(244 241 234 / 0.4);
+}
+
+.ask__form button {
+  padding: 0.5rem 1.3rem;
+  border: 0;
+  border-radius: 999px;
+  background: var(--signal);
+  color: var(--bg);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.ask__form button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
 /* ---------- Experience ---------- */
 
 .experience {
@@ -747,6 +895,15 @@ kbd {
   .about {
     align-items: start;
     padding-top: 56svh;
+  }
+
+  .ask {
+    align-items: start;
+    padding-top: 46svh;
+  }
+
+  .ask__inner {
+    width: 100%;
   }
 
   .about__text {

@@ -5,6 +5,7 @@ import './style.css';
 import Lenis from 'lenis';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import { setupChat } from './chat';
 import { about, experience, highlights, profile, skills, statement } from './content';
 import { createRedactDemo } from './redact';
 import { loadPortrait, shapes, textShape, type Shape } from './shapes';
@@ -276,6 +277,21 @@ document.querySelectorAll<HTMLAnchorElement>('a[data-scroll]').forEach((a) =>
   }),
 );
 
+/* ---------- Ask: the AI chat ---------- */
+
+let activeShape = '';
+let chatBusy = false;
+setupChat($('#ask'), {
+  email: profile.email,
+  suggestions: ['What does Titus do at Adami?', 'What is he best at?', 'Has he worked with clients?'],
+  // While an answer is on its way, the sphere spins up. Only if you are still looking at it.
+  onBusy(busy) {
+    chatBusy = busy;
+    if (activeShape === 'mind') swarm?.setShape(shapeFor(busy ? 'mindBusy' : 'mind'));
+  },
+  onResize: () => ScrollTrigger.refresh(),
+});
+
 /* ---------- Scroll choreography ---------- */
 
 // Each section tells the swarm what to become while it is in the middle of the screen.
@@ -286,7 +302,11 @@ function bindShapes() {
       trigger: section,
       start: 'top 55%',
       end: 'bottom 45%',
-      onToggle: (self) => self.isActive && swarm?.setShape(shapeFor(section.dataset.shape!)),
+      onToggle: (self) => {
+        if (!self.isActive) return;
+        activeShape = section.dataset.shape!;
+        swarm?.setShape(shapeFor(activeShape === 'mind' && chatBusy ? 'mindBusy' : activeShape));
+      },
     });
   });
 }
