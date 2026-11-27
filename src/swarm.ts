@@ -251,6 +251,12 @@ export class Swarm {
     this.goalPitch = pitch;
   }
 
+  /** Shift the rotation by whole turns without any visible change (e.g. 2π back to 0). */
+  shiftYaw(delta: number) {
+    this.yaw += delta;
+    this.goalYaw += delta;
+  }
+
   /** Blast particles away from a point. */
   /** A soft beat outwards from the middle of the current shape, in all three directions. */
   pulse(strength = 90) {

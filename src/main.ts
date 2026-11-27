@@ -188,7 +188,8 @@ if (swarm) {
   const s = swarm;
   const stage = $('[data-face-stage]');
   // spin is in radians per second, so a throw feels the same at any frame rate.
-  const face = { yaw: 0, pitch: 0, spin: 0, dragging: false, lastX: 0, lastY: 0, lastT: 0 };
+  const face = { yaw: 0, pitch: 0, spin: 0, dragging: false, lastX: 0, lastY: 0, lastT: 0, showing: false };
+  let shown = false;
   const TAU = Math.PI * 2;
 
   stage.addEventListener('pointerdown', (e) => {
@@ -221,9 +222,39 @@ if (swarm) {
   stage.addEventListener('pointerup', release);
   stage.addEventListener('pointercancel', release);
 
+  // The first time the head appears, it turns once all the way round after the scan, so
+  // visitors see straight away that it is a real 3D head they can grab.
+  function showOff() {
+    if (shown || reducedMotion) return;
+    shown = true;
+    face.showing = true;
+    gsap.to(face, {
+      yaw: face.yaw + TAU,
+      duration: 3.6,
+      delay: 1.6,
+      ease: 'power2.inOut',
+      onComplete: () => {
+        // Back from 2π to 0 in both places at once, so the head never turns back later.
+        face.yaw -= TAU;
+        s.shiftYaw(-TAU);
+        face.showing = false;
+      },
+    });
+  }
+  stage.addEventListener('pointerdown', () => {
+    // Grabbing it cancels the show-off turn.
+    gsap.killTweensOf(face);
+    face.showing = false;
+  });
+
   gsap.ticker.add((time, deltaMs) => {
     if (!s.grabbable) return;
+    showOff();
     const dt = Math.min(deltaMs / 1000, 0.1);
+    if (face.showing) {
+      s.setRotation(face.yaw, face.pitch);
+      return;
+    }
     if (!face.dragging) {
       // Keep spinning with the momentum of the throw, then settle facing the pointer.
       face.yaw += face.spin * dt;
