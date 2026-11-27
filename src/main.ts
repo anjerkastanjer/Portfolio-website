@@ -422,6 +422,23 @@ function toLines(text: string): string[] {
   return lines;
 }
 
+// Links to the deck collapse the swarm into a point and fade out before the page changes.
+document.querySelectorAll<HTMLAnchorElement>('a[href="./deck.html"]').forEach((a) =>
+  a.addEventListener('click', (e) => {
+    if (reducedMotion || !swarm || e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return;
+    e.preventDefault();
+    swarm.setShape(shapes.portal);
+    document.documentElement.classList.add('is-leaving');
+    window.setTimeout(() => (location.href = a.href), 1100);
+  }),
+);
+// Coming back with the browser's back button restores the page from cache; undo the fade.
+window.addEventListener('pageshow', (e) => {
+  if (!e.persisted) return;
+  document.documentElement.classList.remove('is-leaving');
+  if (activeShape) swarm?.setShape(shapeFor(activeShape));
+});
+
 const draw = setupDraw(
   (shape) => swarm?.setShape(shape),
   // When drawing ends, hand the swarm back to whatever section you are looking at.

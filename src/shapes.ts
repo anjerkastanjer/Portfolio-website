@@ -321,6 +321,22 @@ export const shapes: Record<string, Shape> = {
   face,
   sprite,
   mind: mindShape(0.3, 1.5),
+  // Everything collapses into one bright point: the way into the 3D deck.
+  portal: {
+    wobble: 0,
+    alpha: 1,
+    solid: true,
+    points(w, h, count) {
+      const out = new Float32Array(count * 3);
+      for (let i = 0; i < count; i++) {
+        const a = Math.random() * Math.PI * 2;
+        const r = Math.random() ** 2 * 6;
+        out[i * 3] = w / 2 + Math.cos(a) * r;
+        out[i * 3 + 1] = h / 2 + Math.sin(a) * r;
+      }
+      return out;
+    },
+  },
   mindBusy: mindShape(2.2, 7),
   redact,
   sheet,

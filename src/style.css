@@ -931,6 +931,34 @@ kbd {
   gap: 0.25rem 0.75rem;
 }
 
+/* Leaving for the deck: the page fades while the swarm collapses, then the screen goes black. */
+.is-leaving main,
+.is-leaving .bar,
+.is-leaving .foot {
+  opacity: 0;
+  transition: opacity 0.5s;
+}
+
+.is-leaving body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  background: var(--bg);
+  animation: leave 1.1s ease-in forwards;
+  pointer-events: none;
+}
+
+@keyframes leave {
+  0%,
+  60% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
 /* ---------- Draw mode ---------- */
 
 .draw {
