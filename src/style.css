@@ -959,6 +959,44 @@ kbd {
   }
 }
 
+/* ---------- 404 ---------- */
+
+.lost {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 1rem;
+  min-height: 100vh;
+  min-height: 100svh;
+  padding: 0 var(--gutter) 12vh;
+}
+
+.lost__title {
+  font-family: var(--display);
+  font-size: clamp(5rem, 20vw, 14rem);
+  font-weight: 800;
+  line-height: 1;
+}
+
+.has-swarm .lost__title {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+}
+
+.lost__home {
+  align-self: flex-start;
+  padding: 0.75rem 1.5rem;
+  border-radius: 999px;
+  background: var(--signal);
+  color: var(--bg);
+  font-weight: 700;
+}
+
 /* ---------- Draw mode ---------- */
 
 .draw {
