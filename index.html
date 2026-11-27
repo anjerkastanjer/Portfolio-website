@@ -105,9 +105,26 @@
       <p class="foot__tricks">
         <button class="foot__say" type="button" data-open-say>Press <kbd>/</kbd> to make the swarm say something</button>
         <button class="foot__say" type="button" data-open-draw>or <kbd>D</kbd> to draw something for it</button>
+        <button class="foot__say" type="button" data-open-tricks><kbd>?</kbd> shows everything else</button>
       </p>
       <p>Built with Three.js, GSAP and <span data-count>thousands of</span> particles.</p>
     </footer>
+
+    <dialog class="tricks" data-tricks aria-labelledby="tricks-title">
+      <h2 id="tricks-title">Things to try</h2>
+      <dl>
+        <div><dt>Move the mouse</dt><dd>The swarm moves out of your way.</dd></div>
+        <div><dt>Click anywhere</dt><dd>Scatter it.</dd></div>
+        <div><dt><kbd>/</kbd></dt><dd>Type a word and the swarm spells it.</dd></div>
+        <div><dt><kbd>D</kbd></dt><dd>Draw something and the swarm copies it.</dd></div>
+        <div><dt>Drag my face</dt><dd>It is 3D. Throw it and it spins.</dd></div>
+        <div><dt>Ask</dt><dd>The AI knows my CV. Watch the sphere while it answers.</dd></div>
+        <div><dt>Sound</dt><dd>Top right on a computer. Everything is generated live.</dd></div>
+        <div><dt>3D deck</dt><dd>My numbers at real scale. Move the mouse to look around.</dd></div>
+        <div><dt>Be the filter</dt><dd>A 30-second game in the games section. Can you beat 0.998?</dd></div>
+      </dl>
+      <form method="dialog"><button>Close</button></form>
+    </dialog>
 
     <form class="say" data-say hidden>
       <label class="say__label" for="say-input">What should the swarm spell?</label>

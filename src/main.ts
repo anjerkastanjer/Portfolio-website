@@ -469,11 +469,21 @@ const draw = setupDraw(
   },
 );
 
+const tricks = $<HTMLDialogElement>('[data-tricks]');
+$('[data-open-tricks]').addEventListener('click', () => tricks.showModal());
+// Clicking the backdrop closes it too.
+tricks.addEventListener('click', (e) => e.target === tricks && tricks.close());
+
 $('[data-open-say]').addEventListener('click', openSay);
 $('[data-open-draw]').addEventListener('click', () => draw.open());
 window.addEventListener('keydown', (e) => {
-  const typing = (e.target as Element).closest('input, textarea');
-  if (e.key === '/' && !typing && !draw.isOpen) {
+  const typing = (e.target as Element).closest?.('input, textarea');
+  if (e.key === '?' && !typing && !draw.isOpen && !tricks.open) {
+    e.preventDefault();
+    tricks.showModal();
+  } else if (tricks.open) {
+    return; // the dialog handles its own keys, Escape included
+  } else if (e.key === '/' && !typing && !draw.isOpen) {
     e.preventDefault();
     openSay();
   } else if ((e.key === 'd' || e.key === 'D') && !typing && !draw.isOpen && sayForm.hidden && !e.metaKey && !e.ctrlKey) {

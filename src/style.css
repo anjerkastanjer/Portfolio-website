@@ -1019,6 +1019,82 @@ kbd {
   font-weight: 700;
 }
 
+/* ---------- Things to try ---------- */
+
+.tricks {
+  width: min(34rem, calc(100vw - 2 * var(--gutter)));
+  max-height: calc(100svh - 2 * var(--gutter));
+  padding: clamp(1.25rem, 4vw, 2rem);
+  border: 1px solid rgb(244 241 234 / 0.25);
+  border-radius: 20px;
+  background: var(--deep);
+  color: var(--paper);
+}
+
+.tricks[open] {
+  animation: tricks-in 0.4s var(--ease-out);
+}
+
+@keyframes tricks-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.98);
+  }
+}
+
+.tricks::backdrop {
+  background: rgb(9 9 11 / 0.6);
+  backdrop-filter: blur(6px);
+}
+
+.tricks h2 {
+  font-family: var(--display);
+  font-size: 2rem;
+  font-weight: 800;
+}
+
+.tricks dl {
+  display: grid;
+  gap: 0.6rem;
+  margin: 1.25rem 0 1.5rem;
+}
+
+.tricks dl div {
+  display: grid;
+  grid-template-columns: 8.5rem 1fr;
+  gap: 1rem;
+  padding-top: 0.6rem;
+  border-top: 1px solid rgb(244 241 234 / 0.14);
+}
+
+.tricks dt {
+  color: var(--signal);
+  font-weight: 600;
+}
+
+.tricks dd {
+  margin: 0;
+  color: rgb(244 241 234 / 0.88);
+}
+
+.tricks form button {
+  padding: 0.55rem 1.4rem;
+  border: 0;
+  border-radius: 999px;
+  background: var(--signal);
+  color: var(--bg);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+@media (max-width: 520px) {
+  .tricks dl div {
+    grid-template-columns: 1fr;
+    gap: 0.1rem;
+  }
+}
+
 /* ---------- Draw mode ---------- */
 
 .draw {
