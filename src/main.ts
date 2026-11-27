@@ -9,6 +9,7 @@ import { setupChat } from './chat';
 import { about, experience, highlights, profile, skills, statement } from './content';
 import { createRedactDemo } from './redact';
 import { createGame } from './game';
+import { setupDraw } from './draw';
 import { loadPortrait, shapes, textShape, type Shape } from './shapes';
 import { Swarm } from './swarm';
 
@@ -421,13 +422,28 @@ function toLines(text: string): string[] {
   return lines;
 }
 
+const draw = setupDraw(
+  (shape) => swarm?.setShape(shape),
+  // When drawing ends, hand the swarm back to whatever section you are looking at.
+  () => {
+    const shape = activeShape === 'mind' && chatBusy ? 'mindBusy' : activeShape;
+    if (shape) swarm?.setShape(shapeFor(shape));
+  },
+);
+
 $('[data-open-say]').addEventListener('click', openSay);
+$('[data-open-draw]').addEventListener('click', () => draw.open());
 window.addEventListener('keydown', (e) => {
   const typing = (e.target as Element).closest('input, textarea');
-  if (e.key === '/' && !typing) {
+  if (e.key === '/' && !typing && !draw.isOpen) {
     e.preventDefault();
     openSay();
-  } else if (e.key === 'Escape' && !sayForm.hidden) closeSay();
+  } else if ((e.key === 'd' || e.key === 'D') && !typing && !draw.isOpen && sayForm.hidden && !e.metaKey && !e.ctrlKey) {
+    draw.open();
+  } else if (e.key === 'Escape') {
+    if (draw.isOpen) draw.close();
+    else if (!sayForm.hidden) closeSay();
+  }
 });
 sayForm.addEventListener('submit', (e) => {
   e.preventDefault();
