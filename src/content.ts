@@ -109,10 +109,11 @@ export const highlights: Highlight[] = [
     id: 'games',
     metric: 'Outside of work',
     title: 'Games, and the rest',
-    body: 'Next to work I make games in Godot, like Sword of the Emperor, which I built with a team of three others. And a good part of what I have made for clients lives in private repositories. Ask me about it.',
+    body: 'Next to work I make games in Godot, like Sword of the Emperor, which I built with a team of three others. And a good part of what I have made for clients lives in private repositories, so it cannot be shown here.',
     tags: ['Godot', 'GDScript', 'Game design'],
     shape: 'sprite',
     game: true,
+    link: { href: '#contact', label: 'Ask me about the private work' },
   },
 ];
 

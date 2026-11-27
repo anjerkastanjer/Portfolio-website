@@ -24,6 +24,8 @@ export type Shape = {
   solid?: boolean;
   /** Build the shape top to bottom like a scan, instead of the default left-to-right sweep. */
   scan?: boolean;
+  /** Draw the whole shape in the accent colour (the redaction bars). */
+  tint?: boolean;
   /** Particle size multiplier; smaller dots show more detail. */
   size?: number;
 };
@@ -79,6 +81,73 @@ export function textShape(lines: string[], place: 'center' | 'top' | 'side' = 'c
     depth: 44,
     // Narrow screens get condensed letters, so the name can be set larger.
     draw: (ctx, w, h) => drawText(ctx, lines, region(w, h, place), isWide(w) ? 'semi-expanded' : 'condensed'),
+  };
+}
+
+/* ---------- Redaction in the swarm ---------- */
+
+type Found = { label: string; value: string };
+
+/** Lay out up to three found values as lines beside the PII case, the same way for both steps. */
+function layoutFound(ctx: CanvasRenderingContext2D, found: Found[], w: number, h: number) {
+  const r = region(w, h, 'side');
+  const lines = found.slice(0, 3).map((f) => (f.value.length > 18 ? `${f.value.slice(0, 17)}…` : f.value));
+  const probe = 100;
+  ctx.font = `800 ${probe}px ${DISPLAY}`;
+  ctx.fontStretch = 'condensed';
+  const widest = Math.max(...lines.map((l) => ctx.measureText(l).width));
+  const lineH = 1.25;
+  const size = Math.min((r.w / widest) * probe, r.h / (3 * lineH), r.h * 0.2);
+  ctx.font = `800 ${size}px ${DISPLAY}`;
+  ctx.fontStretch = 'condensed';
+  const total = lines.length * size * lineH;
+  return lines.map((text, i) => ({
+    text,
+    label: found[i].label,
+    size,
+    x: r.x + r.w / 2,
+    y: r.y + (r.h - total) / 2 + size * lineH * (i + 0.5),
+    width: ctx.measureText(text).width,
+  }));
+}
+
+/** Step 1: the personal data the visitor typed, spelled out in white. */
+export function foundTextShape(found: Found[]): Shape {
+  return {
+    wobble: 0.6,
+    alpha: 1,
+    depth: 20,
+    draw(ctx, w, h) {
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      for (const line of layoutFound(ctx, found, w, h)) ctx.fillText(line.text, line.x, line.y);
+    },
+  };
+}
+
+/** Step 2: each value becomes a solid orange bar of the same width, its label cut out of it. */
+export function redactedShape(found: Found[]): Shape {
+  return {
+    wobble: 0,
+    alpha: 1,
+    depth: 10,
+    tint: true,
+    scan: true,
+    draw(ctx, w, h) {
+      const lines = layoutFound(ctx, found, w, h);
+      for (const l of lines) ctx.fillRect(l.x - l.width / 2, l.y - l.size * 0.45, l.width, l.size * 0.9);
+      ctx.globalCompositeOperation = 'destination-out';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      for (const l of lines) {
+        ctx.font = `700 ${l.size * 0.9 * 0.55}px ${DISPLAY}`;
+        ctx.fontStretch = 'condensed';
+        ctx.letterSpacing = '0.1em';
+        ctx.fillText(l.label, l.x, l.y);
+      }
+      ctx.letterSpacing = '0px';
+      ctx.globalCompositeOperation = 'source-over';
+    },
   };
 }
 

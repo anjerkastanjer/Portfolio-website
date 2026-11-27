@@ -7,11 +7,11 @@ import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { setupChat } from './chat';
 import { about, experience, highlights, profile, skills, statement } from './content';
-import { createRedactDemo } from './redact';
+import { createRedactDemo, type Found } from './redact';
 import { createGame } from './game';
 import { setupDraw } from './draw';
 import { Sound } from './sound';
-import { loadPortrait, shapes, textShape, type Shape } from './shapes';
+import { foundTextShape, loadPortrait, redactedShape, shapes, textShape, type Shape } from './shapes';
 import { Swarm, onViewportChange } from './swarm';
 
 gsap.registerPlugin(ScrollTrigger);
@@ -31,7 +31,7 @@ function el<K extends keyof HTMLElementTagNameMap>(tag: K, className?: string, t
 function externalLink(href: string, label: string, className: string) {
   const a = el('a', className, label);
   a.href = href;
-  if (!href.startsWith('mailto:')) {
+  if (href.startsWith('http')) {
     a.target = '_blank';
     a.rel = 'noopener';
   }
@@ -95,7 +95,7 @@ $('[data-highlights]').append(
     h.tags.forEach((t) => tags.append(el('li', '', t)));
     inner.append(el('p', 'project__metric', h.metric), el('h3', 'project__title', h.title), el('p', 'project__body', h.body), tags);
     if (h.demo) {
-      inner.append(createRedactDemo('Mail Sanne at sanne@voorbeeld.nl or call 06 12345678. She lives at 1012 AB and her IBAN is NL91 ABNA 0417 1643 00.'));
+      inner.append(createRedactDemo('Mail Sanne at sanne@voorbeeld.nl or call 06 12345678. She lives at 1012 AB and her IBAN is NL91 ABNA 0417 1643 00.', redactInSwarm));
     }
     if (h.game) inner.append(createGame());
     if (h.link) inner.append(externalLink(h.link.href, h.link.label, 'project__link'));
@@ -113,6 +113,15 @@ $('[data-skills]').append(
     return col;
   }),
 );
+
+// Two clear ways in, one for recruiters and one for clients, each with the subject filled in.
+const mail = (subject: string) => `mailto:${profile.email}?subject=${encodeURIComponent(subject)}`;
+if (profile.email) {
+  $('[data-paths]').append(
+    externalLink(mail('Role: '), 'Hiring for a role?', 'contact__path'),
+    externalLink(mail('Project: '), 'Have a project?', 'contact__path'),
+  );
+}
 
 const contactLinks: [string, string][] = [
   [profile.email && `mailto:${profile.email}`, 'Email'],
@@ -133,20 +142,46 @@ $('[data-links]').append(
 // Clicking Email also copies the address and says so.
 const contactStatus = $('[data-contact-status]');
 let statusTimer = 0;
-document.querySelector('a[href^="mailto:"]')?.addEventListener('click', () => {
-  const show = (text: string) => {
-    contactStatus.textContent = text;
-    contactStatus.classList.add('is-visible');
-    clearTimeout(statusTimer);
-    statusTimer = window.setTimeout(() => contactStatus.classList.remove('is-visible'), 5000);
-  };
-  // Show the address straight away; copying can be blocked or slow, and must never hide it.
-  show(`You can reach me at ${profile.email}.`);
-  navigator.clipboard?.writeText(profile.email).then(
-    () => show(`Copied ${profile.email} to your clipboard.`),
-    () => undefined,
-  );
-});
+document.querySelectorAll<HTMLAnchorElement>('a[href^="mailto:"]').forEach((link) =>
+  link.addEventListener('click', () => {
+    const show = (text: string) => {
+      contactStatus.textContent = text;
+      contactStatus.classList.add('is-visible');
+      clearTimeout(statusTimer);
+      statusTimer = window.setTimeout(() => contactStatus.classList.remove('is-visible'), 5000);
+    };
+    // Show the address straight away; copying can be blocked or slow, and must never hide it.
+    show(`You can reach me at ${profile.email}.`);
+    navigator.clipboard?.writeText(profile.email).then(
+      () => show(`Copied ${profile.email} to your clipboard.`),
+      () => undefined,
+    );
+  }),
+);
+
+/* ---------- Redaction in the swarm ---------- */
+
+// While the visitor types in the PII demo, the swarm spells what was found and then redacts
+// it: white text first, then each value collapses into an orange bar with its label cut out.
+// Only rebuilt when the set of found items changes, 400 ms after typing stops.
+let redactTimer = 0;
+let redactKey = '';
+function redactInSwarm(found: Found[]) {
+  clearTimeout(redactTimer);
+  const top = found.slice(0, 3);
+  const key = top.map((f) => `${f.label}:${f.value}`).join('|');
+  redactTimer = window.setTimeout(() => {
+    if (!swarm || activeShape !== 'redact' || key === redactKey) return;
+    redactKey = key;
+    if (!top.length) return swarm.setShape(shapes.redact);
+    if (reducedMotion) return swarm.setShape(redactedShape(top));
+    swarm.setShape(foundTextShape(top));
+    // Long enough for the text to form and be read (about 900 ms once it has landed).
+    redactTimer = window.setTimeout(() => {
+      if (activeShape === 'redact' && redactKey === key) swarm?.setShape(redactedShape(top));
+    }, 2000);
+  }, 400);
+}
 
 /* ---------- Clock ---------- */
 
@@ -351,6 +386,7 @@ function bindShapes() {
       onToggle: (self) => {
         if (!self.isActive) return;
         activeShape = section.dataset.shape!;
+        redactKey = ''; // coming back to the PII case starts the redaction over
         swarm?.setShape(shapeFor(activeShape === 'mind' && chatBusy ? 'mindBusy' : activeShape));
       },
     });

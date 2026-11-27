@@ -11,6 +11,7 @@ const FADE = 0.34;
 const vertexShader = /* glsl */ `
   attribute float aSeed;
   attribute float aSpeed;
+  attribute float aTint;
   uniform float uSize;
   uniform float uPixelRatio;
   uniform vec2 uPivot;
@@ -19,8 +20,10 @@ const vertexShader = /* glsl */ `
   varying float vSpeed;
   varying float vSeed;
   varying float vDepth;
+  varying float vTint;
   void main() {
     vSpeed = aSpeed;
+    vTint = aTint;
     vSeed = aSeed;
     // Rotate around the pivot (screen space, y pointing down), then apply a simple perspective.
     vec3 p = position - vec3(uPivot, 0.0);
@@ -43,11 +46,13 @@ const fragmentShader = /* glsl */ `
   varying float vSpeed;
   varying float vSeed;
   varying float vDepth;
+  varying float vTint;
   void main() {
     float d = length(gl_PointCoord - 0.5);
     float disc = smoothstep(0.5, 0.32, d);
     if (disc < 0.01) discard;
-    vec3 color = mix(uPaper, uSignal, smoothstep(0.15, 0.9, vSpeed));
+    // Orange when moving fast, or when the shape asks for it (the redaction bars).
+    vec3 color = mix(uPaper, uSignal, max(vTint, smoothstep(0.15, 0.9, vSpeed)));
     // Each frame stamps only a fraction of the dot: a resting particle builds up to full
     // brightness, a moving one smears into a streak. Fast ones get a boost so streaks stay visible.
     float a = disc * uAlpha * (0.55 + vSeed * 0.45) * (0.7 + 0.3 * vDepth) * uStamp * (1.0 + 2.4 * vSpeed);
@@ -70,7 +75,15 @@ export function onViewportChange(callback: () => void, delay = 150) {
     timer = window.setTimeout(() => {
       const w = window.innerWidth;
       const h = window.innerHeight;
-      if (w === width && Math.abs(h - height) < 150) return;
+      // Same width and the screen got a little shorter (the address bar came back): the
+      // canvas is already tall enough, so nothing to do. If it got taller, grow once,
+      // otherwise particles would be clipped in a strip at the bottom.
+      if (w === width && h <= height) return;
+      if (w === width && h - height < 150) {
+        height = h;
+        callback();
+        return;
+      }
       width = w;
       height = h;
       callback();
@@ -111,6 +124,14 @@ export class Swarm {
   private readonly stiffness: Float32Array;
   private readonly seed: Float32Array;
   private readonly speed: Float32Array;
+  /** 1 = drawn in the accent colour. Each particle takes its new tint when it leaves. */
+  private readonly tint: Float32Array;
+  private readonly nextTint: Float32Array;
+  private tintAttr!: THREE.BufferAttribute;
+  private tintChanged = false;
+  /** Under reduced motion, only draw when something changed. */
+  private dirty = true;
+  private dpr = Math.min(window.devicePixelRatio, 2);
 
   private readonly sampler = document.createElement('canvas');
   private width = window.innerWidth;
@@ -161,6 +182,8 @@ export class Swarm {
     this.stiffness = new Float32Array(n);
     this.seed = new Float32Array(n);
     this.speed = new Float32Array(n);
+    this.tint = new Float32Array(n);
+    this.nextTint = new Float32Array(n);
 
     // Everything starts packed into one buzzing ball in the middle of the screen.
     // The first shape makes it burst open.
@@ -182,6 +205,8 @@ export class Swarm {
     this.speedAttr = new THREE.BufferAttribute(this.speed, 1).setUsage(THREE.DynamicDrawUsage);
     geometry.setAttribute('position', this.posAttr);
     geometry.setAttribute('aSpeed', this.speedAttr);
+    this.tintAttr = new THREE.BufferAttribute(this.tint, 1).setUsage(THREE.DynamicDrawUsage);
+    geometry.setAttribute('aTint', this.tintAttr);
     geometry.setAttribute('aSeed', new THREE.BufferAttribute(this.seed, 1));
 
     this.material = new THREE.ShaderMaterial({
@@ -230,18 +255,21 @@ export class Swarm {
   }
 
   resize() {
+    // With an unchanged width, keep the tallest height seen (see onViewportChange). Growing
+    // taller only extends the canvas: the shapes stay where they are and are not rebuilt.
+    const sameWidth = window.innerWidth === this.width;
     this.width = window.innerWidth;
-    this.height = window.innerHeight;
-    const dpr = Math.min(window.devicePixelRatio, 2);
-    this.renderer.setPixelRatio(dpr);
+    this.height = sameWidth ? Math.max(this.height, window.innerHeight) : window.innerHeight;
+    this.renderer.setPixelRatio(this.dpr);
     // Fixed pixel size (not 100%), so ignoring a small height change never stretches the swarm.
     this.renderer.setSize(this.width, this.height, true);
     this.renderer.clear();
-    this.material.uniforms.uPixelRatio.value = dpr;
+    this.material.uniforms.uPixelRatio.value = this.dpr;
     this.camera.right = this.width;
     this.camera.bottom = this.height;
     this.camera.updateProjectionMatrix();
-    if (this.shape) this.setShape(this.shape, { sweep: false });
+    this.dirty = true;
+    if (this.shape && !sameWidth) this.setShape(this.shape, { sweep: false });
   }
 
   setPointer(x: number, y: number) {
@@ -260,6 +288,7 @@ export class Swarm {
 
   /** Where a grabbable shape should rotate to; it eases there by itself. */
   setRotation(yaw: number, pitch: number) {
+    if (Math.abs(yaw - this.goalYaw) > 1e-4 || Math.abs(pitch - this.goalPitch) > 1e-4) this.dirty = true;
     this.goalYaw = yaw;
     this.goalPitch = pitch;
   }
@@ -299,6 +328,7 @@ export class Swarm {
 
   setShape(shape: Shape, { sweep = true } = {}) {
     if (shape === this.shape && sweep) return;
+    this.dirty = true;
     const first = !this.shape;
     if (!first && sweep) this.onShape?.();
     this.shape = shape;
@@ -338,6 +368,7 @@ export class Swarm {
       this.next[i * 3] = x;
       this.next[i * 3 + 1] = y;
       this.next[i * 3 + 2] = z;
+      this.nextTint[i] = shape.tint ? 1 : 0;
       // Particles leave in a wave from left to right (or top to bottom for a scan), with a bit
       // of randomness so it feels alive.
       const along = shape.scan ? y / h : x / w;
@@ -387,8 +418,22 @@ export class Swarm {
       this.step(dt);
       elapsed -= dt;
     }
+    // Under reduced motion nothing moves on its own: skip drawing an unchanged picture,
+    // but finish any fade-in and redraw after a new shape, a resize or a turn of the head.
+    const settled =
+      Math.abs(this.targetAlpha - this.alpha) < 0.002 &&
+      // Under reduced motion only a grabbed shape (the head) has a rotation goal; others rest at 0.
+      Math.abs((this.shape?.grab ? this.goalYaw : 0) - this.yaw) < 1e-3 &&
+      Math.abs((this.shape?.grab ? this.goalPitch : 0) - this.pitch) < 1e-3 &&
+      this.pivot.distanceTo(this.pivotGoal) < 0.5;
+    if (this.reducedMotion && !this.dirty && settled) return;
+    this.dirty = false;
     this.posAttr.needsUpdate = true;
     this.speedAttr.needsUpdate = true;
+    if (this.tintChanged) {
+      this.tintAttr.needsUpdate = true;
+      this.tintChanged = false;
+    }
     this.renderer.render(this.fadeScene, this.fadeCamera);
     this.renderer.render(this.scene, this.camera);
   }
@@ -402,10 +447,21 @@ export class Swarm {
   private adaptQuality(frame: number, now: number) {
     if (frame > 100 || now < this.bornAt + 4000) return;
     this.frameMs += (frame - this.frameMs) * 0.03;
-    if (this.frameMs < 26 || this.active <= 5000 || now - this.lastCut < 2000) return;
+    if (this.frameMs < 26 || now - this.lastCut < 2000) return;
     this.lastCut = now;
-    this.active = Math.max(5000, Math.round(this.active * 0.8));
-    this.geometry.setDrawRange(0, this.active);
+    if (this.active > 5000) {
+      this.active = Math.max(5000, Math.round(this.active * 0.8));
+      this.geometry.setDrawRange(0, this.active);
+    } else if (this.dpr > 1) {
+      // Still slow with the fewest particles: filling the screen is the cost now, so draw at a
+      // lower resolution. Last resort, because it makes the dots a little softer.
+      this.dpr = Math.max(1, this.dpr - 0.5);
+      this.renderer.setPixelRatio(this.dpr);
+      this.renderer.setSize(this.width, this.height, true);
+      this.renderer.clear();
+      this.material.uniforms.uPixelRatio.value = this.dpr;
+      this.frameMs = 20;
+    }
   }
 
   private step(dt: number) {
@@ -454,6 +510,10 @@ export class Swarm {
       const i3 = i * 3;
       if (t >= release[i]) {
         release[i] = Infinity;
+        if (this.tint[i] !== this.nextTint[i]) {
+          this.tint[i] = this.nextTint[i];
+          this.tintChanged = true;
+        }
         target[i3] = next[i3];
         target[i3 + 1] = next[i3 + 1];
         target[i3 + 2] = next[i3 + 2];

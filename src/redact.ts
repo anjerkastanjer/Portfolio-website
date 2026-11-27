@@ -24,8 +24,13 @@ export function findPII(text: string): Hit[] {
   return hits.sort((a, b) => a.start - b.start);
 }
 
-/** Build the demo: a text field, and the same text underneath with the personal data masked. */
-export function createRedactDemo(sample: string): HTMLElement {
+export type Found = { label: string; value: string };
+
+/**
+ * Build the demo: a text field, and the same text underneath with the personal data masked.
+ * `onType` is told what was found each time the visitor edits the text (not on first render).
+ */
+export function createRedactDemo(sample: string, onType?: (found: Found[]) => void): HTMLElement {
   const root = document.createElement('div');
   root.className = 'demo';
 
@@ -69,7 +74,10 @@ export function createRedactDemo(sample: string): HTMLElement {
     out.replaceChildren(...nodes);
     if (!text.trim()) out.textContent = 'Nothing to hide yet.';
   };
-  input.addEventListener('input', render);
+  input.addEventListener('input', () => {
+    render();
+    onType?.(findPII(input.value).map((h) => ({ label: h.label, value: input.value.slice(h.start, h.end) })));
+  });
   render();
 
   root.append(label, input, out, note);
