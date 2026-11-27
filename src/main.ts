@@ -295,6 +295,11 @@ setupChat($('#ask'), {
   onResize: () => ScrollTrigger.refresh(),
 });
 
+// The sphere beats along with the words as they arrive: the assistant visibly talks.
+new MutationObserver(() => {
+  if (chatBusy && activeShape === 'mind') swarm?.pulse();
+}).observe($('[data-ask-log]'), { childList: true, subtree: true, characterData: true });
+
 /* ---------- Scroll choreography ---------- */
 
 // Each section tells the swarm what to become while it is in the middle of the screen.

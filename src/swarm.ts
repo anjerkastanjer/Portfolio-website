@@ -231,6 +231,23 @@ export class Swarm {
   }
 
   /** Blast particles away from a point. */
+  /** A soft beat outwards from the middle of the current shape, in all three directions. */
+  pulse(strength = 90) {
+    if (this.reducedMotion) return;
+    const px = this.pivotGoal.x;
+    const py = this.pivotGoal.y;
+    for (let i = 0; i < this.count; i++) {
+      const dx = this.pos[i * 3] - px;
+      const dy = this.pos[i * 3 + 1] - py;
+      const dz = this.pos[i * 3 + 2];
+      const d = Math.hypot(dx, dy, dz) + 1;
+      const f = strength * (0.5 + this.seed[i]);
+      this.vel[i * 3] += (dx / d) * f;
+      this.vel[i * 3 + 1] += (dy / d) * f;
+      this.vel[i * 3 + 2] += (dz / d) * f;
+    }
+  }
+
   shock(x: number, y: number, strength = 1400) {
     if (this.reducedMotion) return;
     for (let i = 0; i < this.count; i++) {
