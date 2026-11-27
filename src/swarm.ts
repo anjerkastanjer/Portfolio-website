@@ -302,8 +302,11 @@ export class Swarm {
       this.next[i * 3] = x;
       this.next[i * 3 + 1] = y;
       this.next[i * 3 + 2] = z;
-      // Particles leave in a wave from left to right, with a bit of randomness so it feels alive.
-      this.release[i] = sweep && !this.reducedMotion ? this.time + Math.random() * 0.25 + (x / w) * 0.45 : this.time;
+      // Particles leave in a wave from left to right (or top to bottom for a scan), with a bit
+      // of randomness so it feels alive.
+      const along = shape.scan ? y / h : x / w;
+      const spread = shape.scan ? 1.1 : 0.45;
+      this.release[i] = sweep && !this.reducedMotion ? this.time + Math.random() * (shape.scan ? 0.06 : 0.25) + along * spread : this.time;
     }
 
     // The swarm rotates around the middle of whatever it is forming.

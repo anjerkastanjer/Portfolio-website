@@ -22,6 +22,8 @@ export type Shape = {
   alpha: number;
   /** Particles ignore the pointer's push. */
   solid?: boolean;
+  /** Build the shape top to bottom like a scan, instead of the default left-to-right sweep. */
+  scan?: boolean;
   /** Particle size multiplier; smaller dots show more detail. */
   size?: number;
 };
@@ -115,6 +117,7 @@ const face: Shape = {
   alpha: 1,
   solid: true,
   grab: true,
+  scan: true,
   size: 0.74,
   pivot(w, h) {
     const r = faceBox(w, h);
