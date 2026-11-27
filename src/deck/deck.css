@@ -210,4 +210,8 @@ a {
   .text {
     max-width: none;
   }
+
+  .scrim {
+    background: linear-gradient(to top, rgb(9 9 11 / 0.92) 0%, rgb(9 9 11 / 0.8) 30%, transparent 58%);
+  }
 }

@@ -17,7 +17,7 @@ const $ = <T extends HTMLElement = HTMLElement>(sel: string) => document.querySe
 
 type Vec = [number, number, number];
 type Beat = {
-  set: 'sheets' | 'field' | 'alarms';
+  set: 'sheets' | 'field' | 'alarms' | 'hub';
   title: string;
   sub: string;
   cam: Vec;
@@ -28,6 +28,8 @@ type Beat = {
   grid?: number;
   spans?: number;
   mask?: number;
+  access?: number;
+  user?: number;
   place?: 'top' | 'bottom';
 };
 
@@ -113,12 +115,41 @@ const beats: Beat[] = [
     place: 'top',
   },
   {
-    set: 'alarms',
+    set: 'hub',
+    title: 'One AI agent, connected to every tool you use.',
+    sub: 'Google Workspace, HubSpot, Monday.com and many more, through MCP.',
+    cam: [0, 13, 40],
+    look: [0, 4, 0],
+    fog: 0.014,
+  },
+  {
+    set: 'hub',
+    title: 'It only opens what you are allowed to open.',
+    sub: 'I built the login layer in between: OAuth 2.1 with PKCE, per person.',
+    cam: [-27, 15, 36],
+    look: [0, 3.5, 0],
+    fog: 0.012,
+    access: 1,
+  },
+  {
+    set: 'hub',
+    title: 'Someone else signs in, and other doors open.',
+    sub: 'Same agent, their permissions. Never more.',
+    cam: [25, 27, 38],
+    look: [0, 3, 0],
+    fog: 0.012,
+    access: 1,
+    user: 1,
+  },
+  {
+    set: 'hub',
     title: 'Want the rest?',
     sub: '',
-    cam: [10, 9, 58],
-    look: [20, 1, 40],
-    fog: 0.012,
+    cam: [0, 30, 46],
+    look: [0, 6, 0],
+    fog: 0.02,
+    access: 1,
+    user: 1,
   },
 ];
 
@@ -265,7 +296,7 @@ for (let i = 0; i < SHEETS; i++) {
   gridPos.push(new THREE.Vector3((col - 7.5) * 2.5, 0.06, (row - 4.5) * 3.4));
 }
 
-const state = { pile: 0, grid: 0, spans: 0, mask: 0, fog: 0.05, px: 3.4, py: 2.7, pz: 5.6, tx: 0.9, ty: 0.1, tz: 0 };
+const state = { pile: 0, grid: 0, spans: 0, mask: 0, access: 0, user: 0, fog: 0.05, px: 3.4, py: 2.7, pz: 5.6, tx: 0.9, ty: 0.1, tz: 0 };
 const dummy = new THREE.Object3D();
 const tmpColor = new THREE.Color();
 const spin = new THREE.Quaternion();
@@ -429,7 +460,62 @@ const lostGlow = new THREE.PointLight(SIGNAL, 60, 30, 2);
 lostGlow.position.set(19, 2.5, 41);
 alarmSet.add(alarms, lost, alarmLight, lostGlow);
 
-const sets = { sheets: sheetSet, field: fieldSet, alarms: alarmSet };
+/* ---------- Set 4: one agent, many tools, and who may open which ---------- */
+
+const hubSet = new THREE.Group();
+scene.add(hubSet);
+const TOOLS = 14;
+const corePos = new THREE.Vector3(0, 4.5, 0);
+const core = new THREE.Mesh(
+  new THREE.IcosahedronGeometry(1.5, 1),
+  new THREE.MeshStandardMaterial({ color: '#f4f1ea', emissive: '#ffe9cf', emissiveIntensity: 1.6, flatShading: true }),
+);
+core.position.copy(corePos);
+const coreLight = new THREE.PointLight('#ffe2bd', 900, 120, 2);
+coreLight.position.copy(corePos);
+coreLight.castShadow = true;
+coreLight.shadow.mapSize.set(1024, 1024);
+coreLight.shadow.bias = -0.002;
+hubSet.add(core, coreLight);
+
+// Two people with different rights: which of the tools each of them may use.
+const mayOpen = [new Set([0, 3, 4, 8, 11]), new Set([1, 4, 6, 9, 10, 13])];
+const beamGeo = new THREE.CylinderGeometry(0.07, 0.07, 1, 8).rotateX(Math.PI / 2).translate(0, 0, 0.5);
+const tools: { door: THREE.MeshStandardMaterial; beam: THREE.Mesh; length: number }[] = [];
+for (let i = 0; i < TOOLS; i++) {
+  const a = (i / TOOLS) * Math.PI * 2 + 0.2;
+  const r = 15 + (i % 3) * 1.6;
+  const h = 5 + rand() * 6;
+  const door = new THREE.MeshStandardMaterial({ color: '#34343a', roughness: 0.6, emissive: SIGNAL, emissiveIntensity: 0 });
+  const pillar = new THREE.Mesh(new THREE.BoxGeometry(2.4, h, 2.4), door);
+  pillar.position.set(Math.cos(a) * r, h / 2, Math.sin(a) * r);
+  pillar.rotation.y = -a;
+  pillar.castShadow = true;
+  pillar.receiveShadow = true;
+  const beam = new THREE.Mesh(beamGeo, new THREE.MeshBasicMaterial({ color: '#ffb48a', transparent: true, opacity: 0, fog: false }));
+  const end = new THREE.Vector3(pillar.position.x, Math.min(h - 0.6, corePos.y), pillar.position.z);
+  beam.position.copy(corePos);
+  beam.lookAt(end);
+  hubSet.add(pillar, beam);
+  tools.push({ door, beam, length: corePos.distanceTo(end) - 1.2 });
+}
+
+function updateHub(t: number) {
+  core.rotation.set(t * 0.3, t * 0.45, 0);
+  core.position.y = corePos.y + Math.sin(t * 0.9) * 0.25;
+  tools.forEach((tool, i) => {
+    // Blend from the first person's rights to the second's as the user value moves from 0 to 1.
+    const a = mayOpen[0].has(i) ? 1 : 0;
+    const b = mayOpen[1].has(i) ? 1 : 0;
+    const open = state.access * (a + (b - a) * easeInOut(clamp01(state.user)));
+    tool.door.emissiveIntensity = open * 1.5;
+    (tool.beam.material as THREE.MeshBasicMaterial).opacity = open * (0.75 + 0.25 * Math.sin(t * 3 + i));
+    tool.beam.scale.z = Math.max(0.001, tool.length * easeOut(open));
+    tool.beam.visible = open > 0.01;
+  });
+}
+
+const sets = { sheets: sheetSet, field: fieldSet, alarms: alarmSet, hub: hubSet };
 
 /* ---------- Interface ---------- */
 
@@ -478,6 +564,8 @@ function go(index: number, instant = false) {
     grid: beat.grid ?? 0,
     spans: beat.spans ?? 0,
     mask: beat.mask ?? 0,
+    access: beat.access ?? 0,
+    user: beat.user ?? 0,
     fog: beat.fog,
     px: beat.cam[0],
     py: beat.cam[1],
@@ -566,6 +654,7 @@ renderer.setAnimationLoop(() => {
   fog.density = state.fog;
 
   if (sheetSet.visible) updateSheets();
+  if (hubSet.visible) updateHub(t);
   if (fieldSet.visible) {
     spanMat.uniforms.uShow.value = state.spans;
     spanMat.uniforms.uMask.value = state.mask;

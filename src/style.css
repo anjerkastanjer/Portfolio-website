@@ -429,6 +429,43 @@ main,
   color: var(--signal);
 }
 
+.deck-link {
+  display: block;
+  margin: 4vh var(--gutter) 0;
+  padding: clamp(1.5rem, 4vw, 3rem);
+  border: 1px solid rgb(244 241 234 / 0.25);
+  border-radius: 20px;
+  background: rgb(22 22 26 / 0.6);
+  transition: border-color 0.3s, background 0.3s;
+}
+
+.deck-link:hover {
+  border-color: var(--signal);
+  background: rgb(22 22 26 / 0.85);
+}
+
+.deck-link__title {
+  display: block;
+  font-family: var(--display);
+  font-size: clamp(2rem, 5vw, 4.5rem);
+  font-weight: 800;
+  font-variation-settings: 'wdth' 90;
+  line-height: 1;
+  transition: font-variation-settings 0.6s var(--ease-out), color 0.3s;
+}
+
+.deck-link:hover .deck-link__title {
+  font-variation-settings: 'wdth' 125;
+  color: var(--signal);
+}
+
+.deck-link__sub {
+  display: block;
+  max-width: 38rem;
+  margin-top: 1rem;
+  color: rgb(244 241 234 / 0.85);
+}
+
 /* ---------- About (the face) ---------- */
 
 .about {
