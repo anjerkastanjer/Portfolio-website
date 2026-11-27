@@ -74,11 +74,14 @@ export function createRedactDemo(sample: string, onType?: (found: Found[]) => vo
     out.replaceChildren(...nodes);
     if (!text.trim()) out.textContent = 'Nothing to hide yet.';
   };
+  const found = (): Found[] => findPII(input.value).map((h) => ({ label: h.label, value: input.value.slice(h.start, h.end) }));
   input.addEventListener('input', () => {
     render();
-    onType?.(findPII(input.value).map((h) => ({ label: h.label, value: input.value.slice(h.start, h.end) })));
+    onType?.(found());
   });
   render();
+  // Tell the page what the example text contains, so the swarm can play it before anyone types.
+  queueMicrotask(() => onType?.(found()));
 
   root.append(label, input, out, note);
   return root;

@@ -46,7 +46,7 @@ export function createGame(): HTMLElement {
       <p>Words fall for 30 seconds. Catch the personal data, let everything else through. Move with your mouse, finger or the arrow keys.</p>
       <button type="button" class="game__start">Start</button>
     </div>
-    <canvas class="game__canvas" hidden aria-label="Game: catch falling personal data"></canvas>`;
+    <canvas class="game__canvas" hidden tabindex="0" aria-label="Game: catch falling personal data. Use the left and right arrow keys."></canvas>`;
   const intro = root.querySelector<HTMLElement>('.game__intro')!;
   const start = root.querySelector<HTMLButtonElement>('.game__start')!;
   const canvas = root.querySelector<HTMLCanvasElement>('.game__canvas')!;
@@ -190,6 +190,8 @@ export function createGame(): HTMLElement {
     const bestLine = best === null ? '' : record ? ` New personal best, up from ${best.toFixed(3)}.` : ` Your best so far: ${best.toFixed(3)}.`;
     result.textContent = `You caught ${caught}, missed ${missed} and raised ${falseAlarms} false alarm${falseAlarms === 1 ? '' : 's'}. That is an F1 of ${f1.toFixed(3)}. Mine scores ${MY_F1} on 350,000 of these. ${verdict}${bestLine}`;
     start.textContent = 'Play again';
+    // Keyboard users land on the result and can play again straight away.
+    requestAnimationFrame(() => start.focus());
     intro.hidden = false;
     intro.querySelectorAll('p').forEach((p) => (p.hidden = true));
   }
@@ -211,6 +213,7 @@ export function createGame(): HTMLElement {
     intro.hidden = true;
     result.hidden = true;
     canvas.hidden = false;
+    canvas.focus({ preventScroll: true });
     fit();
     items = [];
     caught = missed = falseAlarms = 0;

@@ -68,6 +68,10 @@ export const experience: Job[] = [
 export type Highlight = {
   id: string;
   metric: string;
+  /** Short label for the hero, when the metric itself is too technical for a first glance. */
+  proof?: string;
+  /** Where and for whom the work was done. */
+  context?: string;
   title: string;
   body: string;
   tags: string[];
@@ -82,6 +86,7 @@ export type Highlight = {
 export const highlights: Highlight[] = [
   {
     id: 'pii',
+    context: 'At Adami AI',
     metric: 'F1 0.998 on 350,000 PII spans',
     title: 'Personal data stays private',
     body: 'An API that masks names, addresses and IDs in Dutch and English text before it reaches an external LLM. Rules, a BERT model and an LLM reviewer work in layers; the reviewer removed 11,869 false alarms and lost only 17 real ones.',
@@ -91,6 +96,7 @@ export const highlights: Highlight[] = [
   },
   {
     id: 'timesheets',
+    context: 'At Adami AI, for Koninklijke Vezet',
     metric: '2–3 FTE of typing saved',
     title: 'Handwriting into the ERP',
     body: 'Around 160 handwritten timesheets a day, read by AI and booked straight into the ERP. I benchmarked 11 OCR and vision models; now two of them check each other, so 97% of numbers go through untouched, for under $0.10 a form.',
@@ -99,6 +105,8 @@ export const highlights: Highlight[] = [
   },
   {
     id: 'mcp',
+    context: 'At Adami AI',
+    proof: 'AI agents with each user’s own rights',
     metric: 'OAuth 2.1 with PKCE',
     title: 'Agents with your permissions',
     body: 'A per-user login layer for MCP servers. The AI agent acts with each person’s own rights in Google Workspace, HubSpot, Monday.com and many other tools, never with more.',

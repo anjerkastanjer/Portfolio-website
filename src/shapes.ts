@@ -140,7 +140,10 @@ export function redactedShape(found: Found[]): Shape {
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       for (const l of lines) {
-        ctx.font = `700 ${l.size * 0.9 * 0.55}px ${DISPLAY}`;
+        const labelSize = l.size * 0.9 * 0.55;
+        // Too small to survive as a cut-out at this particle density: keep the bar solid.
+        if (labelSize < 14) continue;
+        ctx.font = `800 ${labelSize}px ${DISPLAY}`;
         ctx.fontStretch = 'condensed';
         ctx.letterSpacing = '0.1em';
         ctx.fillText(l.label, l.x, l.y);

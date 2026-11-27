@@ -325,6 +325,12 @@ main,
   width: min(46vw, 42rem);
 }
 
+.project__context {
+  margin-bottom: 0.35rem;
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+
 .project__metric {
   color: var(--signal);
   font-size: 1rem;
@@ -704,6 +710,24 @@ main,
   50% {
     opacity: 0.25;
   }
+}
+
+.ask__follow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem;
+  margin: 0.25rem 0 0.75rem;
+  font-size: 0.95rem;
+}
+
+.ask__follow span {
+  width: 100%;
+  color: var(--muted);
+}
+
+.ask__follow .contact__path {
+  padding: 0.5rem 1.1rem;
 }
 
 .ask__suggestions {

@@ -9,9 +9,12 @@ type Options = {
   onBusy: (busy: boolean) => void;
   /** Called whenever the section changes height. */
   onResize: () => void;
+  /** Shown once, under the first answer: a next step for the visitor. */
+  followUp?: () => HTMLElement;
 };
 
-export function setupChat(root: HTMLElement, { email, suggestions, onBusy, onResize }: Options) {
+export function setupChat(root: HTMLElement, { email, suggestions, onBusy, onResize, followUp }: Options) {
+  let followedUp = false;
   const log = root.querySelector<HTMLElement>('[data-ask-log]')!;
   const chips = root.querySelector<HTMLElement>('[data-ask-suggestions]')!;
   const form = root.querySelector<HTMLFormElement>('[data-ask-form]')!;
@@ -98,6 +101,10 @@ export function setupChat(root: HTMLElement, { email, suggestions, onBusy, onRes
       history.pop(); // the question went unanswered; don't send it again as context
     } else {
       history.push({ role: 'assistant', content: text });
+      if (followUp && !followedUp) {
+        followedUp = true;
+        log.append(followUp());
+      }
     }
     busy = false;
     button.disabled = false;

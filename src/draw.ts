@@ -106,17 +106,27 @@ export function setupDraw(onShape: (shape: Shape) => void, onClose: () => void) 
     resizeTimer = window.setTimeout(() => !overlay.hidden && fit(), 150);
   });
 
+  // While drawing, the page behind is faded and also taken out of keyboard reach, so Tab
+  // stays on the Clear and Done buttons. Closing puts focus back where it was.
+  let returnFocus: HTMLElement | null = null;
+  const behind = () => document.querySelectorAll<HTMLElement>('main, .bar, .foot');
+
   function open() {
     strokes.length = 0;
+    returnFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     overlay.hidden = false;
     document.documentElement.classList.add('is-drawing');
+    behind().forEach((el) => (el.inert = true));
     fit();
+    overlay.querySelector<HTMLButtonElement>('.draw__done')!.focus();
   }
 
   function close() {
     clearTimeout(timer);
     overlay.hidden = true;
     document.documentElement.classList.remove('is-drawing');
+    behind().forEach((el) => (el.inert = false));
+    returnFocus?.focus();
     onClose();
   }
 

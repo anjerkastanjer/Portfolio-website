@@ -35,6 +35,7 @@ function externalLink(href: string, label: string, className: string) {
     a.target = '_blank';
     a.rel = 'noopener';
   }
+  if (href.startsWith('#')) a.dataset.scroll = '';
   return a;
 }
 
@@ -48,7 +49,7 @@ $('[data-proof]').append(
     .slice(0, 3)
     .map((h) => {
       const li = el('li');
-      const a = el('a', '', h.metric);
+      const a = el('a', '', h.proof ?? h.metric);
       a.href = `#${h.id}`;
       a.dataset.scroll = '';
       li.append(a);
@@ -93,6 +94,7 @@ $('[data-highlights]').append(
     const tags = el('ul', 'project__tags');
     tags.setAttribute('aria-label', 'Built with');
     h.tags.forEach((t) => tags.append(el('li', '', t)));
+    if (h.context) inner.append(el('p', 'project__context', h.context));
     inner.append(el('p', 'project__metric', h.metric), el('h3', 'project__title', h.title), el('p', 'project__body', h.body), tags);
     if (h.demo) {
       inner.append(createRedactDemo('Mail Sanne at sanne@voorbeeld.nl or call 06 12345678. She lives at 1012 AB and her IBAN is NL91 ABNA 0417 1643 00.', redactInSwarm));
@@ -142,7 +144,7 @@ $('[data-links]').append(
 // Clicking Email also copies the address and says so.
 const contactStatus = $('[data-contact-status]');
 let statusTimer = 0;
-document.querySelectorAll<HTMLAnchorElement>('a[href^="mailto:"]').forEach((link) =>
+function withCopyFallback(link: HTMLAnchorElement) {
   link.addEventListener('click', () => {
     const show = (text: string) => {
       contactStatus.textContent = text;
@@ -156,31 +158,41 @@ document.querySelectorAll<HTMLAnchorElement>('a[href^="mailto:"]').forEach((link
       () => show(`Copied ${profile.email} to your clipboard.`),
       () => undefined,
     );
-  }),
-);
+  });
+}
+document.querySelectorAll<HTMLAnchorElement>('a[href^="mailto:"]').forEach(withCopyFallback);
 
 /* ---------- Redaction in the swarm ---------- */
 
-// While the visitor types in the PII demo, the swarm spells what was found and then redacts
-// it: white text first, then each value collapses into an orange bar with its label cut out.
-// Only rebuilt when the set of found items changes, 400 ms after typing stops.
-let redactTimer = 0;
+// In the PII case the swarm spells the personal data found in the demo, then redacts it:
+// white text first, then each value collapses into an orange bar with its label cut out.
+// It plays by itself when you reach the case (using the example text), and again when you
+// type something that changes what is found. Wide screens only: on a phone it would cover
+// the demo. Two timers on purpose: typing more ordinary text must not cancel the bars.
+let typeTimer = 0;
+let barTimer = 0;
+let introTimer = 0;
 let redactKey = '';
+let lastFound: Found[] = [];
 function redactInSwarm(found: Found[]) {
-  clearTimeout(redactTimer);
+  lastFound = found;
+  clearTimeout(typeTimer);
+  typeTimer = window.setTimeout(() => playRedaction(found), 400);
+}
+function playRedaction(found: Found[]) {
+  if (!swarm || activeShape !== 'redact' || window.innerWidth < 900) return;
   const top = found.slice(0, 3);
   const key = top.map((f) => `${f.label}:${f.value}`).join('|');
-  redactTimer = window.setTimeout(() => {
-    if (!swarm || activeShape !== 'redact' || key === redactKey) return;
-    redactKey = key;
-    if (!top.length) return swarm.setShape(shapes.redact);
-    if (reducedMotion) return swarm.setShape(redactedShape(top));
-    swarm.setShape(foundTextShape(top));
-    // Long enough for the text to form and be read (about 900 ms once it has landed).
-    redactTimer = window.setTimeout(() => {
-      if (activeShape === 'redact' && redactKey === key) swarm?.setShape(redactedShape(top));
-    }, 2000);
-  }, 400);
+  if (key === redactKey) return;
+  redactKey = key;
+  clearTimeout(barTimer);
+  if (!top.length) return swarm.setShape(shapes.redact);
+  if (reducedMotion) return swarm.setShape(redactedShape(top));
+  swarm.setShape(foundTextShape(top));
+  // Long enough for the text to form and be read (about 900 ms once it has landed).
+  barTimer = window.setTimeout(() => {
+    if (activeShape === 'redact' && redactKey === key) swarm?.setShape(redactedShape(top));
+  }, 2000);
 }
 
 /* ---------- Clock ---------- */
@@ -287,7 +299,7 @@ if (swarm) {
       face.spin *= Math.exp(-dt * 3);
       // Then settle facing the pointer.
       const r = stage.getBoundingClientRect();
-      const lookYaw = Math.max(-0.5, Math.min(0.5, (pointer.x - (r.left + r.width / 2)) / window.innerWidth)) + Math.sin(time * 0.6) * 0.06;
+      const lookYaw = Math.max(-0.5, Math.min(0.5, (pointer.x - (r.left + r.width / 2)) / window.innerWidth)) + (reducedMotion ? 0 : Math.sin(time * 0.6) * 0.06);
       const lookPitch = Math.max(-0.35, Math.min(0.35, -(pointer.y - (r.top + r.height / 2)) / window.innerHeight)) * 0.8;
       if (Math.abs(face.spin) < 0.6) {
         const settle = 1 - Math.exp(-dt * 3.5);
@@ -344,7 +356,19 @@ let activeShape = '';
 let chatBusy = false;
 setupChat($('#ask'), {
   email: profile.email,
-  suggestions: ['What does Titus do at Adami?', 'What is he best at?', 'Has he worked with clients?'],
+  suggestions: ['What does Titus do at Adami?', 'What has he built that runs in production?', 'Has he worked with clients?'],
+  // After the first answer, the same two ways to get in touch as the contact section.
+  followUp() {
+    const row = el('div', 'ask__follow');
+    row.append(el('span', '', 'Want to talk to Titus himself?'));
+    if (profile.email) {
+      const role = externalLink(mail('Role: '), 'Hiring for a role?', 'contact__path');
+      const project = externalLink(mail('Project: '), 'Have a project?', 'contact__path');
+      [role, project].forEach(withCopyFallback);
+      row.append(role, project);
+    }
+    return row;
+  },
   // While an answer is on its way, the sphere spins up. Only if you are still looking at it.
   onBusy(busy) {
     chatBusy = busy;
@@ -386,7 +410,11 @@ function bindShapes() {
       onToggle: (self) => {
         if (!self.isActive) return;
         activeShape = section.dataset.shape!;
-        redactKey = ''; // coming back to the PII case starts the redaction over
+        // Reaching the PII case plays the redaction with whatever the demo holds right now.
+        redactKey = '';
+        clearTimeout(introTimer);
+        clearTimeout(barTimer);
+        if (activeShape === 'redact') introTimer = window.setTimeout(() => playRedaction(lastFound), 1200);
         swarm?.setShape(shapeFor(activeShape === 'mind' && chatBusy ? 'mindBusy' : activeShape));
       },
     });
@@ -472,7 +500,9 @@ intro();
 const sayForm = $<HTMLFormElement>('[data-say]');
 const sayInput = $<HTMLInputElement>('#say-input');
 
+let sayReturnFocus: HTMLElement | null = null;
 function openSay() {
+  sayReturnFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
   sayForm.hidden = false;
   requestAnimationFrame(() => sayForm.classList.add('is-open'));
   sayInput.value = '';
@@ -482,6 +512,9 @@ function openSay() {
 function closeSay() {
   sayForm.classList.remove('is-open');
   setTimeout(() => (sayForm.hidden = true), 300);
+  // Back to where the visitor was, instead of the top of the page.
+  if (sayReturnFocus && sayReturnFocus !== document.body) sayReturnFocus.focus();
+  else sayInput.blur();
 }
 
 /** Break a phrase into at most three balanced lines. */
@@ -546,6 +579,10 @@ $('[data-open-say]').addEventListener('click', openSay);
 $('[data-open-draw]').addEventListener('click', () => draw.open());
 window.addEventListener('keydown', (e) => {
   const typing = (e.target as Element).closest?.('input, textarea');
+  // Single-key shortcuts only fire as plain key presses, never with a modifier held, and not
+  // while the game is being played (it uses the keyboard itself).
+  const playing = !!document.querySelector('.game__canvas:not([hidden])');
+  if ((e.altKey || e.ctrlKey || e.metaKey || playing) && e.key !== 'Escape') return;
   if (e.key === '?' && !typing && !draw.isOpen && !tricks.open) {
     e.preventDefault();
     tricks.showModal();
@@ -554,7 +591,7 @@ window.addEventListener('keydown', (e) => {
   } else if (e.key === '/' && !typing && !draw.isOpen) {
     e.preventDefault();
     openSay();
-  } else if ((e.key === 'd' || e.key === 'D') && !typing && !draw.isOpen && sayForm.hidden && !e.metaKey && !e.ctrlKey) {
+  } else if ((e.key === 'd' || e.key === 'D') && !typing && !draw.isOpen && sayForm.hidden) {
     draw.open();
   } else if (e.key === 'Escape') {
     if (draw.isOpen) draw.close();
