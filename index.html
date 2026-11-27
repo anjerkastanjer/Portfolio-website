@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Titus Driessen</title>
+    <meta name="description" content="Titus Driessen is an AI engineer and full-stack developer in Amsterdam who builds secure AI products." />
+    <meta name="theme-color" content="#1a22b8" />
+    <meta property="og:title" content="Titus Driessen" />
+    <meta property="og:description" content="AI engineer and full-stack developer in Amsterdam." />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://anjerkastanjer.github.io/Portfolio-website/" />
+    <meta property="og:image" content="https://anjerkastanjer.github.io/Portfolio-website/og.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
+    <link rel="preload" href="./portrait.png" as="image" />
+  </head>
+  <body>
+    <canvas id="swarm" aria-hidden="true"></canvas>
+
+    <header class="bar">
+      <a class="bar__name" href="#top" data-scroll>Titus Driessen</a>
+      <nav class="bar__nav" aria-label="Sections">
+        <a href="#about" data-scroll>About</a>
+        <a href="#work" data-scroll>Work</a>
+        <a href="#contact" data-scroll>Contact</a>
+      </nav>
+      <p class="bar__clock"><span data-city></span> <time data-clock></time></p>
+    </header>
+
+    <main>
+      <section class="hero" id="top" data-shape="name">
+        <h1 class="hero__name"><span data-first></span> <span data-second></span></h1>
+        <div class="hero__foot">
+          <p class="hero__lede" data-lede></p>
+          <p class="hero__hint"><span class="only-pointer">Move through the swarm. Click to scatter it.</span><span class="only-touch">Touch the swarm to scatter it.</span></p>
+        </div>
+      </section>
+
+      <section class="statement" data-shape="drift" aria-label="How I work">
+        <p class="statement__text" data-statement></p>
+      </section>
+
+      <section class="about" id="about" data-shape="face" aria-labelledby="about-title">
+        <div class="about__text">
+          <h2 class="about__title" id="about-title" data-about-title></h2>
+          <div class="about__body" data-about-body></div>
+          <dl class="about__facts" data-about-facts></dl>
+        </div>
+        <div class="about__stage" data-face-stage>
+          <img class="about__photo" src="./portrait.png" alt="Portrait of Titus Driessen" width="320" height="320" />
+          <p class="about__hint">Drag to turn my head</p>
+        </div>
+      </section>
+
+      <section class="experience" data-shape="drift" aria-labelledby="experience-title">
+        <h2 class="section-title" id="experience-title">Where I’ve worked</h2>
+        <ol class="experience__list" data-experience></ol>
+      </section>
+
+      <section class="work" id="work" aria-labelledby="work-title">
+        <h2 class="section-title" id="work-title">Some things I’m proud of</h2>
+        <div data-highlights></div>
+      </section>
+
+      <section class="skills" data-shape="drift" aria-labelledby="skills-title">
+        <h2 class="section-title" id="skills-title">What I bring</h2>
+        <div class="skills__grid" data-skills></div>
+      </section>
+
+      <section class="contact" id="contact" data-shape="talk" aria-labelledby="contact-title">
+        <h2 class="sr-only" id="contact-title">Contact</h2>
+        <p class="contact__text">Have a problem that AI should solve, safely? I’d like to hear about it.</p>
+        <ul class="contact__links" data-links></ul>
+      </section>
+    </main>
+
+    <footer class="foot">
+      <button class="foot__say" type="button" data-open-say>Press <kbd>/</kbd> to make the swarm say something</button>
+      <p>Built with Three.js, GSAP and <span data-count>thousands of</span> particles.</p>
+    </footer>
+
+    <form class="say" data-say hidden>
+      <label class="say__label" for="say-input">What should the swarm spell?</label>
+      <input class="say__input" id="say-input" maxlength="24" autocomplete="off" spellcheck="false" placeholder="Type a word and press Enter" />
+    </form>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
