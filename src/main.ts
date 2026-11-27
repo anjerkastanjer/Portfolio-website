@@ -187,10 +187,15 @@ if (swarm) {
 if (swarm) {
   const s = swarm;
   const stage = $('[data-face-stage]');
+  // The head is a relief: convincing from the front and the sides, hollow from behind. So it
+  // turns up to about 60 degrees each way, gives a little resistance past that, and springs back.
+  const MAX_YAW = 1.05;
+  const MAX_PITCH = 0.5;
   // spin is in radians per second, so a throw feels the same at any frame rate.
-  const face = { yaw: 0, pitch: 0, spin: 0, dragging: false, lastX: 0, lastY: 0, lastT: 0, showing: false };
-  let shown = false;
-  const TAU = Math.PI * 2;
+  const face = { yaw: 0, pitch: 0, spin: 0, dragging: false, lastX: 0, lastY: 0, lastT: 0 };
+  /** Past the limit the head still moves, but less and less, like pulling on a rubber band. */
+  const resist = (value: number, limit: number) =>
+    Math.abs(value) <= limit ? value : Math.sign(value) * (limit + (Math.abs(value) - limit) * 0.25);
 
   stage.addEventListener('pointerdown', (e) => {
     face.dragging = true;
@@ -209,9 +214,10 @@ if (swarm) {
     face.lastX = e.clientX;
     face.lastY = e.clientY;
     face.lastT = e.timeStamp;
-    face.yaw += dx * 0.009;
-    face.pitch = Math.max(-0.7, Math.min(0.7, face.pitch - dy * 0.006));
-    const v = Math.max(-14, Math.min(14, (dx * 0.009) / dt));
+    const step = dx * 0.009 * (Math.abs(face.yaw) > MAX_YAW && Math.sign(dx) === Math.sign(face.yaw) ? 0.25 : 1);
+    face.yaw = Math.max(-MAX_YAW * 1.25, Math.min(MAX_YAW * 1.25, face.yaw + step));
+    face.pitch = Math.max(-MAX_PITCH, Math.min(MAX_PITCH, face.pitch - dy * 0.006));
+    const v = Math.max(-8, Math.min(8, (dx * 0.009) / dt));
     face.spin += (v - face.spin) * 0.5;
   });
   const release = (e: PointerEvent) => {
@@ -222,50 +228,21 @@ if (swarm) {
   stage.addEventListener('pointerup', release);
   stage.addEventListener('pointercancel', release);
 
-  // The first time the head appears, it turns once all the way round after the scan, so
-  // visitors see straight away that it is a real 3D head they can grab.
-  function showOff() {
-    if (shown || reducedMotion) return;
-    shown = true;
-    face.showing = true;
-    gsap.to(face, {
-      yaw: face.yaw + TAU,
-      duration: 3.6,
-      delay: 1.6,
-      ease: 'power2.inOut',
-      onComplete: () => {
-        // Back from 2π to 0 in both places at once, so the head never turns back later.
-        face.yaw -= TAU;
-        s.shiftYaw(-TAU);
-        face.showing = false;
-      },
-    });
-  }
-  stage.addEventListener('pointerdown', () => {
-    // Grabbing it cancels the show-off turn.
-    gsap.killTweensOf(face);
-    face.showing = false;
-  });
-
   gsap.ticker.add((time, deltaMs) => {
     if (!s.grabbable) return;
-    showOff();
     const dt = Math.min(deltaMs / 1000, 0.1);
-    if (face.showing) {
-      s.setRotation(face.yaw, face.pitch);
-      return;
-    }
     if (!face.dragging) {
-      // Keep spinning with the momentum of the throw, then settle facing the pointer.
-      face.yaw += face.spin * dt;
-      face.spin *= Math.exp(-dt * 2.2);
+      // Carry on with the momentum of the throw, but stop at the limit instead of turning round.
+      face.yaw = resist(face.yaw + face.spin * dt, MAX_YAW);
+      if (Math.abs(face.yaw) >= MAX_YAW) face.spin = 0;
+      face.spin *= Math.exp(-dt * 3);
+      // Then settle facing the pointer.
       const r = stage.getBoundingClientRect();
       const lookYaw = Math.max(-0.5, Math.min(0.5, (pointer.x - (r.left + r.width / 2)) / window.innerWidth)) + Math.sin(time * 0.6) * 0.06;
       const lookPitch = Math.max(-0.35, Math.min(0.35, -(pointer.y - (r.top + r.height / 2)) / window.innerHeight)) * 0.8;
-      if (Math.abs(face.spin) < 1) {
+      if (Math.abs(face.spin) < 0.6) {
         const settle = 1 - Math.exp(-dt * 3.5);
-        const rest = lookYaw + Math.round((face.yaw - lookYaw) / TAU) * TAU;
-        face.yaw += (rest - face.yaw) * settle;
+        face.yaw += (lookYaw - face.yaw) * settle;
         face.pitch += (lookPitch - face.pitch) * settle;
       }
     }
@@ -429,7 +406,7 @@ if (!reducedMotion) {
 async function intro() {
   await Promise.all([
     document.fonts.load(`800 100px "Anybody Variable"`).catch(() => undefined),
-    loadPortrait(`${import.meta.env.BASE_URL}portrait.png`, `${import.meta.env.BASE_URL}portrait-depth.png`).catch((err) => console.warn('Portrait failed to load', err)),
+    loadPortrait(`${import.meta.env.BASE_URL}portrait.png`).catch((err) => console.warn('Portrait failed to load', err)),
   ]);
   bindShapes();
   bindYears();

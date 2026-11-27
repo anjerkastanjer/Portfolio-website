@@ -16,11 +16,9 @@ const vertexShader = /* glsl */ `
   uniform vec2 uPivot;
   uniform float uYaw;
   uniform float uPitch;
-  uniform float uRadius;
   varying float vSpeed;
   varying float vSeed;
   varying float vDepth;
-  varying float vFacing;
   void main() {
     vSpeed = aSpeed;
     vSeed = aSeed;
@@ -32,7 +30,6 @@ const vertexShader = /* glsl */ `
     p = vec3(p.x, p.y * cx - p.z * sx, p.y * sx + p.z * cx);
     float persp = 1400.0 / (1400.0 - min(p.z, 1000.0));
     vDepth = clamp(p.z / 220.0, -1.0, 1.0);
-    vFacing = clamp(p.z / uRadius, -1.0, 1.0);
     gl_Position = projectionMatrix * vec4(p.xy * persp + uPivot, 0.0, 1.0);
     gl_PointSize = uSize * uPixelRatio * (0.6 + aSeed * 0.8) * (1.0 + aSpeed * 0.7) * persp;
   }
@@ -43,11 +40,9 @@ const fragmentShader = /* glsl */ `
   uniform vec3 uSignal;
   uniform float uAlpha;
   uniform float uStamp;
-  uniform float uOcclude;
   varying float vSpeed;
   varying float vSeed;
   varying float vDepth;
-  varying float vFacing;
   void main() {
     float d = length(gl_PointCoord - 0.5);
     float disc = smoothstep(0.5, 0.32, d);
@@ -56,9 +51,6 @@ const fragmentShader = /* glsl */ `
     // Each frame stamps only a fraction of the dot: a resting particle builds up to full
     // brightness, a moving one smears into a streak. Fast ones get a boost so streaks stay visible.
     float a = disc * uAlpha * (0.55 + vSeed * 0.45) * (0.7 + 0.3 * vDepth) * uStamp * (1.0 + 2.4 * vSpeed);
-    // For a solid 3D shape (the head), points on the far side fade out, so the face does not
-    // shine through the back of the head.
-    a *= mix(1.0, mix(0.1, 1.0, smoothstep(-0.6, 0.2, vFacing)), uOcclude);
     gl_FragColor = vec4(color, a);
     #include <colorspace_fragment>
   }
@@ -181,8 +173,6 @@ export class Swarm {
         uPixelRatio: { value: 1 },
         uAlpha: { value: 1 },
         uStamp: { value: reducedMotion ? 1 : FADE },
-        uOcclude: { value: 0 },
-        uRadius: { value: 220 },
         uPivot: { value: this.pivot },
         uYaw: { value: 0 },
         uPitch: { value: 0 },
@@ -251,12 +241,6 @@ export class Swarm {
     this.goalPitch = pitch;
   }
 
-  /** Shift the rotation by whole turns without any visible change (e.g. 2π back to 0). */
-  shiftYaw(delta: number) {
-    this.yaw += delta;
-    this.goalYaw += delta;
-  }
-
   /** Blast particles away from a point. */
   /** A soft beat outwards from the middle of the current shape, in all three directions. */
   pulse(strength = 90) {
@@ -298,8 +282,6 @@ export class Swarm {
     this.wobble = this.reducedMotion ? 0 : shape.wobble;
     this.targetAlpha = shape.alpha;
     this.material.uniforms.uSize.value = (this.width < 700 ? 2.5 : 2.6) * (shape.size ?? 1);
-    this.material.uniforms.uOcclude.value = shape.grab ? 1 : 0;
-    this.material.uniforms.uRadius.value = shape.radius?.(this.width, this.height) ?? 220;
     // A spinning shape may have turned many times; unwind so the next one doesn't spin back.
     this.yaw = wrapAngle(this.yaw);
     this.spinYaw = 0;
