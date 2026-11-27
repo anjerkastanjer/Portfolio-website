@@ -144,41 +144,36 @@ const face: Shape = {
 
 /* ---------- Highlight shapes ---------- */
 
-/** 80 small clusters on a slowly turning sphere: one per agent. */
-const agents: Shape = {
-  wobble: 1.5,
+/** A little game character, as a pixel sprite. */
+const sprite: Shape = {
+  wobble: 0.8,
   alpha: 1,
-  solid: true,
-  spin: 0.35,
-  size: 0.85,
-  pivot(w, h) {
-    const r = region(w, h, 'side');
-    return [r.x + r.w / 2, r.y + r.h / 2];
-  },
-  points(w, h, count) {
-    const r = square(region(w, h, 'side'), 0.95);
-    const cx = r.x + r.w / 2;
-    const cy = r.y + r.h / 2;
-    const radius = r.w * 0.43;
-    const blob = radius * 0.1;
-    const n = 80;
-    const golden = Math.PI * (3 - Math.sqrt(5));
-    const out = new Float32Array(count * 3);
-    for (let i = 0; i < count; i++) {
-      const k = i % n;
-      const y = 1 - ((k + 0.5) / n) * 2;
-      const ring = Math.sqrt(1 - y * y);
-      const a = k * golden;
-      // a random point inside a small ball around the cluster centre
-      const u = Math.random() * 2 - 1;
-      const phi = Math.random() * Math.PI * 2;
-      const rr = Math.cbrt(Math.random()) * blob;
-      const sq = Math.sqrt(1 - u * u);
-      out[i * 3] = cx + Math.cos(a) * ring * radius + rr * sq * Math.cos(phi);
-      out[i * 3 + 1] = cy + y * radius + rr * sq * Math.sin(phi);
-      out[i * 3 + 2] = Math.sin(a) * ring * radius + rr * u;
-    }
-    return out;
+  depth: 40,
+  draw(ctx, w, h) {
+    const art = [
+      '....######....',
+      '..##########..',
+      '.############.',
+      '.###..##..###.',
+      '.###..##..###.',
+      '.############.',
+      '.############.',
+      '.##.######.##.',
+      '.###......###.',
+      '..##########..',
+      '....######....',
+      '...##....##...',
+      '..###....###..',
+    ];
+    const r = square(region(w, h, 'side'), 0.9);
+    const cell = r.w / art[0].length;
+    const gap = cell * 0.12;
+    const top = r.y + (r.h - art.length * cell) / 2;
+    art.forEach((row, y) =>
+      [...row].forEach((c, x) => {
+        if (c === '#') ctx.fillRect(r.x + x * cell + gap, top + y * cell + gap, cell - gap * 2, cell - gap * 2);
+      }),
+    );
   },
 };
 
@@ -290,7 +285,7 @@ const drift: Shape = { wobble: 30, alpha: 0.36, depth: 700, flow: 90 };
 export const shapes: Record<string, Shape> = {
   drift,
   face,
-  agents,
+  sprite,
   redact,
   sheet,
   hub,

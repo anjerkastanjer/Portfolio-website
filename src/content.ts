@@ -104,13 +104,12 @@ export const highlights: Highlight[] = [
     shape: 'hub',
   },
   {
-    id: 'meatball-megadash',
-    metric: 'Hackathon',
-    title: '80 agents, one dashboard',
-    body: 'A recipe dashboard written by 80 AI agents at the same time. The hard part was keeping them from stepping on each other.',
-    tags: ['Multi-agent orchestration'],
-    shape: 'agents',
-    link: { href: 'https://github.com/anjerkastanjer/meatball-megadash', label: 'See the code on GitHub' },
+    id: 'games',
+    metric: 'Outside of work',
+    title: 'Games, and the rest',
+    body: 'Next to work I make games in Godot, like Infinite Greg, which I built with a team of three others. And a good part of what I have made for clients lives in private repositories. Ask me about it.',
+    tags: ['Godot', 'GDScript', 'Game design'],
+    shape: 'sprite',
   },
 ];
 
@@ -121,7 +120,7 @@ export const skills: { title: string; items: string[] }[] = [
   },
   {
     title: 'Engineering',
-    items: ['TypeScript and Python', 'Vue, Nuxt, Node', 'PostgreSQL', 'Docker, CI/CD, OAuth 2.1', 'Flutter, Java, PHP'],
+    items: ['TypeScript and Python', 'Vue, Nuxt, Node', 'PostgreSQL', 'Docker, CI/CD, OAuth 2.1', 'Flutter, Java, PHP', 'Game development in Godot'],
   },
   {
     title: 'Design and people',
