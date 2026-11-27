@@ -148,6 +148,20 @@ main,
   color: var(--signal);
 }
 
+.bar__sound {
+  margin-right: 1rem;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.bar__sound[aria-pressed='true'] {
+  color: var(--signal);
+}
+
 /* On a phone the top bar keeps only the links you can't easily scroll to. */
 @media (max-width: 520px) {
   .bar__nav a[href='#about'],

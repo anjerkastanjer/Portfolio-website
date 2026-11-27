@@ -10,6 +10,7 @@ import { about, experience, highlights, profile, skills, statement } from './con
 import { createRedactDemo } from './redact';
 import { createGame } from './game';
 import { setupDraw } from './draw';
+import { Sound } from './sound';
 import { loadPortrait, shapes, textShape, type Shape } from './shapes';
 import { Swarm } from './swarm';
 
@@ -295,9 +296,24 @@ setupChat($('#ask'), {
   onResize: () => ScrollTrigger.refresh(),
 });
 
+// Opt-in sound. Nothing plays, and no audio is set up, until the visitor turns it on.
+const sound = new Sound();
+const soundButton = $<HTMLButtonElement>('[data-sound]');
+soundButton.addEventListener('click', async () => {
+  const on = await sound.toggle();
+  soundButton.textContent = on ? 'Sound on' : 'Sound off';
+  soundButton.setAttribute('aria-pressed', String(on));
+});
+if (swarm) {
+  swarm.onShape = () => sound.whoosh();
+  swarm.onShock = () => sound.thump();
+}
+
 // The sphere beats along with the words as they arrive: the assistant visibly talks.
 new MutationObserver(() => {
-  if (chatBusy && activeShape === 'mind') swarm?.pulse();
+  if (!chatBusy) return;
+  sound.tick();
+  if (activeShape === 'mind') swarm?.pulse();
 }).observe($('[data-ask-log]'), { childList: true, subtree: true, characterData: true });
 
 /* ---------- Scroll choreography ---------- */

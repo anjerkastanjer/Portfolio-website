@@ -67,6 +67,9 @@ export class Swarm {
   readonly count: number;
   /** Extra stirring force, set from scroll velocity; decays by itself. */
   turbulence = 0;
+  /** Called when the swarm starts forming a new shape, and when it is scattered (for sound). */
+  onShape?: () => void;
+  onShock?: () => void;
   private readonly pointer = { x: -1e5, y: -1e5 };
 
   private readonly renderer: THREE.WebGLRenderer;
@@ -250,6 +253,7 @@ export class Swarm {
 
   shock(x: number, y: number, strength = 1400) {
     if (this.reducedMotion) return;
+    this.onShock?.();
     for (let i = 0; i < this.count; i++) {
       const dx = this.pos[i * 3] - x;
       const dy = this.pos[i * 3 + 1] - y;
@@ -265,6 +269,7 @@ export class Swarm {
   setShape(shape: Shape, { sweep = true } = {}) {
     if (shape === this.shape && sweep) return;
     const first = !this.shape;
+    if (!first && sweep) this.onShape?.();
     this.shape = shape;
     this.wobble = this.reducedMotion ? 0 : shape.wobble;
     this.targetAlpha = shape.alpha;
